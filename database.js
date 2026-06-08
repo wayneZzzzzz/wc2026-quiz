@@ -5,12 +5,31 @@ const DB_DIR = process.env.DB_DIR || __dirname;
 const DB_PATH = path.join(DB_DIR, 'worldcup.db.bin');
 
 let SQL, sqlDb;
-let inTransaction = false; // 防止事务内 save() 触发隐式提交
+let inTransaction = false;
+
+// Gist 备份：有磁盘时仅本地存，没有磁盘时同步到 Gist
+const gist = require('./lib/gist-backup');
+
+// 上传防抖：10 秒内多次写入只触发一次上传
+let uploadTimer = null;
+function scheduleUpload() {
+  if (!gist.isEnabled()) return;
+  if (uploadTimer) clearTimeout(uploadTimer);
+  uploadTimer = setTimeout(async () => {
+    try {
+      const data = sqlDb.export();
+      await gist.upload(Buffer.from(data));
+    } catch(e) { console.warn('[Gist] 定时上传失败:', e.message); }
+  }, 10 * 1000); // 最后一次写入 10 秒后上传
+}
 
 function save() {
-  if (inTransaction) return; // 事务进行中不落盘，等 COMMIT 后再存
+  if (inTransaction) return;
   const data = sqlDb.export();
-  fs.writeFileSync(DB_PATH, Buffer.from(data));
+  // 如果有本地磁盘就写本地
+  try { fs.writeFileSync(DB_PATH, Buffer.from(data)); } catch(_) {}
+  // 无论是否有磁盘，只要配了 Gist 就备份
+  scheduleUpload();
 }
 
 function createWrapper() {
@@ -40,7 +59,7 @@ function createWrapper() {
           sqlDb.run(sql, flat.length ? flat : undefined);
           const idRes = sqlDb.exec('SELECT last_insert_rowid()');
           const chRes = sqlDb.exec('SELECT changes()');
-          save(); // 事务中时此调用是 no-op
+          save();
           return {
             lastInsertRowid: idRes[0]?.values[0][0] ?? null,
             changes: chRes[0]?.values[0][0] ?? 0,
@@ -60,7 +79,7 @@ function createWrapper() {
           const result = fn(...args);
           sqlDb.run('COMMIT');
           inTransaction = false;
-          save(); // 提交后统一落盘
+          save(); // 事务提交后统一落盘 + 触发 Gist 备份
           return result;
         } catch (e) {
           inTransaction = false;
@@ -72,24 +91,37 @@ function createWrapper() {
   };
 }
 
-function initDb(SqlLib) {
+async function initDb(SqlLib) {
   SQL = SqlLib;
+  gist.loadLocalGistId();
+
+  // 启动时恢复数据库：优先本地磁盘 → Gist → 全新
+  let dbBuffer = null;
   if (fs.existsSync(DB_PATH)) {
-    sqlDb = new SQL.Database(fs.readFileSync(DB_PATH));
-  } else {
-    sqlDb = new SQL.Database();
+    dbBuffer = fs.readFileSync(DB_PATH);
+    console.log(`[DB] 从本地磁盘加载 (${(dbBuffer.length/1024).toFixed(1)} KB)`);
+  } else if (gist.isEnabled()) {
+    console.log('[DB] 本地无数据，尝试从 Gist 恢复...');
+    dbBuffer = await gist.download();
+    if (dbBuffer) {
+      console.log(`[DB] ✅ 从 Gist 恢复成功 (${(dbBuffer.length/1024).toFixed(1)} KB)`);
+      try { fs.writeFileSync(DB_PATH, dbBuffer); } catch(_) {}
+    } else {
+      console.log('[DB] Gist 无备份，创建新数据库');
+    }
   }
 
+  sqlDb = dbBuffer ? new SQL.Database(dbBuffer) : new SQL.Database();
+
   sqlDb.run(`PRAGMA foreign_keys = ON`);
-  // 迁移：为旧库加比分字段
+  // 迁移：加比分字段
   try { sqlDb.run('ALTER TABLE matches ADD COLUMN home_score INTEGER'); } catch(e) {}
   try { sqlDb.run('ALTER TABLE matches ADD COLUMN away_score INTEGER'); } catch(e) {}
 
   sqlDb.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nickname TEXT UNIQUE NOT NULL,
-    total_points INTEGER DEFAULT 0,
-    wins INTEGER DEFAULT 0,
+    total_points INTEGER DEFAULT 0, wins INTEGER DEFAULT 0,
     total_votes INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);

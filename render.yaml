@@ -5,18 +5,12 @@ services:
     plan: free
     buildCommand: npm install
     startCommand: node server.js
-    disk:
-      name: db-storage
-      mountPath: /data
-      sizeGB: 1
     envVars:
-      - key: DB_DIR
-        value: /data
       - key: NODE_ENV
         value: production
-      - key: ODDS_API_KEY
-        sync: false   # 在 Render 控制台手动填入
-      - key: ADMIN_PASSWORD
-        sync: false   # 在 Render 控制台手动填入
       - key: SESSION_SECRET
-        generateValue: true  # Render 自动生成随机值
+        generateValue: true
+      - key: ODDS_API_KEY
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
