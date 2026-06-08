@@ -126,6 +126,29 @@
   </div>
 </div>
 
+<!-- 淘汰队伍管理 -->
+<div class="section" style="margin-top:1.5rem">
+  <h2>🚫 淘汰队伍管理</h2>
+  <p style="font-size:.82rem;color:#6b7280;margin-bottom:1rem">标记已淘汰的球队，冠军预测页中对应预测会变灰</p>
+  <div class="elim-grid">
+    <% const allTeams = ['巴西','法国','阿根廷','德国','英格兰','西班牙','葡萄牙','荷兰','比利时',
+      '墨西哥','美国','日本','韩国','澳大利亚','乌拉圭','土耳其','挪威','加拿大','哥伦比亚',
+      '塞内加尔','摩洛哥','埃及','克罗地亚','奥地利','瑞士','伊朗','南非','捷克','波黑','卡塔尔',
+      '海地','苏格兰','巴拉圭','科特迪瓦','厄瓜多尔','库拉索','突尼斯','瑞典','新西兰','伊拉克',
+      '阿尔及利亚','约旦','刚果','乌兹别克斯坦','加纳','巴拿马','沙特阿拉伯','佛得角']; %>
+    <% allTeams.forEach(team => { %>
+      <% const isElim = eliminated.includes(team); %>
+      <form method="POST" action="/admin/eliminate" class="elim-item">
+        <input type="hidden" name="team" value="<%= team %>">
+        <input type="hidden" name="action" value="<%= isElim ? 'remove' : 'add' %>">
+        <button type="submit" class="elim-btn <%= isElim ? 'elim-active' : '' %>">
+          <%= isElim ? '✗' : '' %> <%= team %>
+        </button>
+      </form>
+    <% }) %>
+  </div>
+</div>
+
 <script>
 function showRename(id) {
   document.getElementById('rename-' + id).style.display = 'flex';

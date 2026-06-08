@@ -72,7 +72,7 @@
               <span class="lb-rank">
                 <% if(i===0){%>🥇<%}else if(i===1){%>🥈<%}else if(i===2){%>🥉<%}else{%><%= i+1 %><%}%>
               </span>
-              <span class="lb-name"><%= u.nickname %>
+              <span class="lb-name"><%= u.nickname %><% if(u.predicted_champion){%><span class="champ-flag"><%= flag(u.predicted_champion) %></span><%}%>
                 <% if (currentUser && u.id === currentUser.id) { %><span class="you-tag">我</span><% } %>
               </span>
               <span class="lb-pts <%= u.total_points > 0 ? 'positive' : u.total_points < 0 ? 'negative' : '' %>">

@@ -396,6 +396,60 @@ a { color: inherit; text-decoration: none; }
 .result-option input:checked + .result-option-box { border-color: #059669; background: #ecfdf5; font-weight: 600; }
 .result-option-box:hover { border-color: #059669; }
 
+/* ===== Champion Prediction ===== */
+.pick-hero { text-align:center; padding:2rem 0 1.5rem; }
+.pick-icon { font-size:3rem; margin-bottom:.5rem; }
+.pick-title { font-size:1.6rem; font-weight:800; margin-bottom:.5rem; }
+.pick-desc  { color:#6b7280; font-size:.9rem; margin-bottom:1.5rem; }
+.team-grid {
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr));
+  gap:.6rem; margin-bottom:1.5rem;
+}
+.team-pick-card input { display:none; }
+.tpc-inner {
+  display:flex; flex-direction:column; align-items:center; gap:.3rem;
+  padding:.65rem .4rem; border:2px solid #e5e7eb; border-radius:10px;
+  cursor:pointer; transition:all .15s; background:#fafafa;
+}
+.tpc-inner:hover { border-color:#059669; background:#ecfdf5; }
+.team-pick-card.selected .tpc-inner { border-color:#059669; background:#ecfdf5; box-shadow:0 0 0 3px rgba(5,150,105,.15); }
+.tpc-flag { font-size:1.6rem; }
+.tpc-name { font-size:.72rem; font-weight:600; text-align:center; color:#374151; }
+.pick-actions { display:flex; justify-content:center; gap:1rem; }
+
+/* Champion grid on leaderboard */
+.champion-grid {
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr));
+  gap:.85rem; padding:1rem 0;
+}
+.champion-card {
+  display:flex; flex-direction:column; align-items:center; gap:.3rem;
+  padding:1rem .75rem; border-radius:12px; background:white;
+  border:2px solid #e5e7eb; box-shadow:0 1px 4px rgba(0,0,0,.07);
+  transition:all .2s;
+}
+.champion-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.1); }
+.champion-eliminated {
+  opacity:.35; filter:grayscale(80%);
+  border-color:#e5e7eb !important;
+}
+.cc-flag { font-size:2.2rem; }
+.cc-team { font-size:.78rem; font-weight:700; color:#1a202c; text-align:center; }
+.cc-user { font-size:.75rem; color:#6b7280; text-align:center; }
+.cc-eliminated { font-size:.68rem; color:#dc2626; font-weight:600; margin-top:.2rem; }
+
+/* Champ flag after nickname */
+.champ-flag { font-size:.9em; margin-left:.2rem; vertical-align:middle; }
+
+/* Eliminated team management */
+.elim-grid { display:flex; flex-wrap:wrap; gap:.4rem; }
+.elim-btn {
+  padding:.3rem .75rem; border-radius:20px; font-size:.8rem; font-weight:500;
+  border:1.5px solid #e5e7eb; background:white; cursor:pointer; transition:all .15s;
+}
+.elim-btn:hover { border-color:#dc2626; color:#dc2626; }
+.elim-active { background:#fef2f2; border-color:#fca5a5; color:#dc2626; font-weight:700; text-decoration:line-through; }
+
 /* ===== Main Tabs (group/knockout) ===== */
 .main-tabs { display:flex; gap:.5rem; margin-bottom:1.75rem; border-bottom:2px solid #e5e7eb; padding-bottom:0; }
 .main-tab {

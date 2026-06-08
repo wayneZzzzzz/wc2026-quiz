@@ -29,11 +29,16 @@ module.exports = function(db) {
     }
     const clean = nickname.trim().slice(0, 20);
     let user = db.prepare('SELECT * FROM users WHERE nickname = ?').get(clean);
+    const isNew = !user;
     if (!user) {
       const result = db.prepare('INSERT INTO users (nickname) VALUES (?)').run(clean);
       user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
     }
     req.session.user = { id: user.id, nickname: user.nickname };
+    // 新用户 或 还没选冠军 → 跳到冠军选择页
+    if (isNew || !user.predicted_champion) {
+      return res.redirect('/pick-champion');
+    }
     res.redirect('/');
   });
 

@@ -32,7 +32,8 @@ module.exports = function(db) {
   router.get('/', requireAdmin, (req, res) => {
     const matches = db.prepare('SELECT * FROM matches ORDER BY match_time ASC').all();
     const users = db.prepare('SELECT * FROM users ORDER BY total_points DESC').all();
-    res.render('admin/dashboard', { title: '管理后台', matches, users, query: req.query });
+    const eliminated = db.prepare('SELECT team FROM eliminated_teams').all().map(r => r.team);
+    res.render('admin/dashboard', { title: '管理后台', matches, users, query: req.query, eliminated });
   });
 
   router.get('/matches/new', requireAdmin, (req, res) => {

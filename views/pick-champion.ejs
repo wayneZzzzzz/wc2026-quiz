@@ -1,0 +1,41 @@
+<%- include('partials/header', {title}) %>
+
+<div class="container container-narrow">
+  <div class="pick-hero">
+    <div class="pick-icon">🏆</div>
+    <h1 class="pick-title">预测世界杯冠军</h1>
+    <p class="pick-desc">选择你认为会夺冠的球队，预测结果将显示在你的昵称旁边</p>
+  </div>
+
+  <form method="POST" action="/pick-champion" id="champion-form">
+    <div class="team-grid">
+      <% teams.forEach(team => { %>
+        <label class="team-pick-card" title="<%= team %>">
+          <input type="radio" name="champion" value="<%= team %>" required>
+          <div class="tpc-inner">
+            <span class="tpc-flag"><%= flag(team) %></span>
+            <span class="tpc-name"><%= team %></span>
+          </div>
+        </label>
+      <% }) %>
+    </div>
+
+    <div class="pick-actions">
+      <a href="/" class="btn btn-outline">暂时跳过</a>
+      <button type="submit" id="pick-btn" class="btn btn-primary btn-lg" disabled>选好了，确认！</button>
+    </div>
+  </form>
+</div>
+
+<script>
+document.querySelectorAll('.team-pick-card input').forEach(r => {
+  r.addEventListener('change', () => {
+    document.querySelectorAll('.team-pick-card').forEach(c => c.classList.remove('selected'));
+    r.closest('.team-pick-card').classList.add('selected');
+    document.getElementById('pick-btn').disabled = false;
+    document.getElementById('pick-btn').textContent = r.value + ' ' + r.closest('.team-pick-card').querySelector('.tpc-flag').textContent + ' 夺冠！确认';
+  });
+});
+</script>
+
+<%- include('partials/footer') %>

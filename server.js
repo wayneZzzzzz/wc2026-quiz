@@ -5,6 +5,7 @@ const initSqlJs = require('sql.js');
 const { createWrapper, initDb } = require('./database');
 const getDb = require('./lib/init-db');
 const { FLAGS, OPTION_TIPS, fmtBJ, fmtET, resolveLabel } = require('./lib/helpers');
+const ALL_TEAMS = Object.keys(FLAGS); // 48支参赛队
 const importMatches = require('./scripts/import-matches');
 const updateOdds    = require('./scripts/update-odds');
 const updateScores  = require('./scripts/update-scores');
@@ -74,7 +75,35 @@ initSqlJs().then(async SQL => {
 
   app.get('/leaderboard', (req, res) => {
     const users = db.prepare('SELECT * FROM users ORDER BY total_points DESC, wins DESC').all();
-    res.render('leaderboard', { title: '排行榜', users });
+    const eliminated = db.prepare('SELECT team FROM eliminated_teams').all().map(r => r.team);
+    res.render('leaderboard', { title: '排行榜', users, eliminated });
+  });
+
+  // 冠军预测选择页
+  app.get('/pick-champion', (req, res) => {
+    if (!req.session.user) return res.redirect('/login');
+    res.render('pick-champion', { title: '预测冠军', teams: ALL_TEAMS });
+  });
+
+  app.post('/pick-champion', (req, res) => {
+    if (!req.session.user) return res.redirect('/login');
+    const { champion } = req.body;
+    if (champion && FLAGS[champion]) {
+      db.prepare('UPDATE users SET predicted_champion=? WHERE id=?').run(champion, req.session.user.id);
+    }
+    res.redirect('/');
+  });
+
+  // 管理员：标记/取消淘汰队伍
+  app.post('/admin/eliminate', (req, res) => {
+    if (!req.session.isAdmin) return res.redirect('/admin/login');
+    const { team, action } = req.body;
+    if (action === 'add') {
+      db.prepare('INSERT OR IGNORE INTO eliminated_teams (team) VALUES (?)').run(team);
+    } else {
+      db.prepare('DELETE FROM eliminated_teams WHERE team=?').run(team);
+    }
+    res.redirect('/admin');
   });
 
   app.listen(PORT, async () => {

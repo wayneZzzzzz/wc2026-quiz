@@ -8,6 +8,7 @@
   <div class="lb-tabs">
     <button class="lb-tab active" onclick="switchTab('points')">积分排行</button>
     <button class="lb-tab" onclick="switchTab('wins')">获胜场次排行</button>
+    <button class="lb-tab" onclick="switchTab('champion')">🏆 冠军预测</button>
   </div>
 
   <!-- 积分排行 -->
@@ -34,7 +35,7 @@
               <% } %>
             </td>
             <td class="name-cell">
-              <%= u.nickname %>
+              <%= u.nickname %><% if(u.predicted_champion){%><span class="champ-flag" title="预测冠军：<%= u.predicted_champion %>"><%= flag(u.predicted_champion) %></span><%}%>
               <% if (currentUser && u.id === currentUser.id) { %><span class="you-tag">你</span><% } %>
             </td>
             <td class="pts-cell <%= u.total_points > 0 ? 'positive' : u.total_points < 0 ? 'negative' : '' %>">
@@ -76,7 +77,7 @@
               <% } %>
             </td>
             <td class="name-cell">
-              <%= u.nickname %>
+              <%= u.nickname %><% if(u.predicted_champion){%><span class="champ-flag" title="预测冠军：<%= u.predicted_champion %>"><%= flag(u.predicted_champion) %></span><%}%>
               <% if (currentUser && u.id === currentUser.id) { %><span class="you-tag">你</span><% } %>
             </td>
             <td><%= u.wins %></td>
@@ -91,6 +92,35 @@
     </table>
   </div>
 
+  <!-- 冠军预测 -->
+  <div id="tab-champion" class="lb-table-wrap" style="display:none">
+    <% const withChampion = users.filter(u => u.predicted_champion); %>
+    <% if (withChampion.length === 0) { %>
+      <div class="empty-state" style="padding:2rem">还没有人预测冠军</div>
+    <% } else { %>
+      <div class="champion-grid">
+        <% withChampion.forEach(u => {
+             const isElim = eliminated.includes(u.predicted_champion);
+        %>
+          <div class="champion-card <%= isElim ? 'champion-eliminated' : '' %>">
+            <div class="cc-flag"><%= flag(u.predicted_champion) %></div>
+            <div class="cc-team"><%= u.predicted_champion %></div>
+            <div class="cc-user">
+              <%= u.nickname %>
+              <% if (currentUser && u.id === currentUser.id) { %><span class="you-tag">我</span><% } %>
+            </div>
+            <% if (isElim) { %><div class="cc-eliminated">已淘汰</div><% } %>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+    <% if (currentUser) { %>
+      <div style="text-align:center;margin-top:1.5rem">
+        <a href="/pick-champion" class="btn btn-outline btn-sm">修改我的预测</a>
+      </div>
+    <% } %>
+  </div>
+
   <div class="rules-box">
     <h3>📋 积分规则</h3>
     <p>每场比赛基础分 <strong>100 点</strong>。猜中者平分所有猜错者的积分；猜错者扣除 100 分。</p>
@@ -100,10 +130,11 @@
 
 <script>
 function switchTab(tab) {
-  document.getElementById('tab-points').style.display = tab === 'points' ? '' : 'none';
-  document.getElementById('tab-wins').style.display = tab === 'wins' ? '' : 'none';
+  ['points','wins','champion'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === tab ? '' : 'none';
+  });
   document.querySelectorAll('.lb-tab').forEach((el, i) => {
-    el.classList.toggle('active', (tab === 'points' && i === 0) || (tab === 'wins' && i === 1));
+    el.classList.toggle('active', i === ['points','wins','champion'].indexOf(tab));
   });
 }
 </script>
