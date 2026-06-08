@@ -6,7 +6,8 @@ const { createWrapper, initDb } = require('./database');
 const getDb = require('./lib/init-db');
 const { FLAGS, OPTION_TIPS, fmtBJ, fmtET, resolveLabel } = require('./lib/helpers');
 const importMatches = require('./scripts/import-matches');
-const updateOdds = require('./scripts/update-odds');
+const updateOdds    = require('./scripts/update-odds');
+const updateScores  = require('./scripts/update-scores');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -84,7 +85,10 @@ initSqlJs().then(async SQL => {
 
     await importMatches();
     await updateOdds();
-    setInterval(updateOdds, ODDS_UPDATE_INTERVAL);
+    await updateScores();
+    // 每3小时更新盘口；每小时检查赛果并自动结算
+    setInterval(updateOdds,   ODDS_UPDATE_INTERVAL);
+    setInterval(updateScores, 60 * 60 * 1000);
 
     // Render 免费版防休眠：每 14 分钟 ping 自己
     if (process.env.RENDER_EXTERNAL_URL) {

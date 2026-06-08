@@ -1,0 +1,71 @@
+<%- include('../partials/header', {title}) %>
+
+<div class="container container-narrow">
+  <a href="/admin" class="back-link">← 返回后台</a>
+  <div class="page-header"><h1>✏️ 修改比赛结果</h1></div>
+
+  <div class="alert alert-warn" style="margin-bottom:1.25rem">
+    ⚠️ 修改后将<strong>自动重新结算</strong>所有积分，原结算数据清零后重算。
+  </div>
+
+  <div class="card">
+    <div class="mdc-teams" style="margin-bottom:1rem">
+      <div class="mdc-team"><%= match.home_team %> <%= flag(match.home_team) %></div>
+      <div class="mdc-sep">VS</div>
+      <div class="mdc-team"><%= flag(match.away_team) %> <%= match.away_team %></div>
+    </div>
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <span class="handicap-tag handicap-tag-lg"><%= match.handicap_desc %></span>
+    </div>
+
+    <% const counts={a:0,b:0,c:0}; votes.forEach(v=>counts[v.choice]++); %>
+    <div class="result-vote-summary">
+      <div class="rvs-item"><span class="vote-opt-letter vote-opt-letter-sm">A</span><%= rl(match.option_a,match) %> <strong><%= counts.a %> 人</strong></div>
+      <div class="rvs-item"><span class="vote-opt-letter vote-opt-letter-sm">B</span><%= rl(match.option_b,match) %> <strong><%= counts.b %> 人</strong></div>
+      <div class="rvs-item"><span class="vote-opt-letter vote-opt-letter-sm">C</span><%= rl(match.option_c,match) %> <strong><%= counts.c %> 人</strong></div>
+    </div>
+
+    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+    <form method="POST" action="/admin/matches/<%= match.id %>/edit-result">
+      <div class="form-group">
+        <label class="form-label">修改比分</label>
+        <div class="score-input-row">
+          <div class="score-team"><%= match.home_team %> <%= flag(match.home_team) %></div>
+          <input type="number" name="home_score" class="form-input score-input" min="0" max="20"
+            value="<%= match.home_score ?? '' %>" placeholder="0" required>
+          <span class="score-colon">:</span>
+          <input type="number" name="away_score" class="form-input score-input" min="0" max="20"
+            value="<%= match.away_score ?? '' %>" placeholder="0" required>
+          <div class="score-team"><%= flag(match.away_team) %> <%= match.away_team %></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">修改正确答案</label>
+        <div class="result-options">
+          <label class="result-option">
+            <input type="radio" name="result" value="a" <%= match.result==='a'?'checked':'' %> required>
+            <div class="result-option-box">A · <%= rl(match.option_a,match) %> （<%= counts.a %> 人）</div>
+          </label>
+          <label class="result-option">
+            <input type="radio" name="result" value="b" <%= match.result==='b'?'checked':'' %>>
+            <div class="result-option-box">B · <%= rl(match.option_b,match) %> （<%= counts.b %> 人）</div>
+          </label>
+          <label class="result-option">
+            <input type="radio" name="result" value="c" <%= match.result==='c'?'checked':'' %>>
+            <div class="result-option-box">C · <%= rl(match.option_c,match) %> （<%= counts.c %> 人）</div>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="/admin" class="btn btn-outline">取消</a>
+        <button type="submit" class="btn btn-primary"
+          onclick="return confirm('确认修改结果并重新结算所有积分？')">保存并重新结算</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

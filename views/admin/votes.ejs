@@ -4,9 +4,17 @@
   <a href="/admin" class="back-link">← 返回后台</a>
   <div class="page-header">
     <h1>✏️ 投票管理</h1>
-    <% if (match.status !== 'finished') { %>
-      <a href="/admin/matches/<%= match.id %>/result" class="btn btn-primary">去公布结果</a>
-    <% } %>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <% if (match.status !== 'finished') { %>
+        <a href="/admin/matches/<%= match.id %>/result" class="btn btn-primary">公布结果</a>
+      <% } else { %>
+        <form method="POST" action="/admin/matches/<%= match.id %>/re-settle"
+              onsubmit="return confirm('确认重新结算？将撤销旧积分后按当前投票重新计算。')">
+          <button class="btn btn-warn">🔄 重新结算</button>
+        </form>
+        <a href="/admin/matches/<%= match.id %>/edit-result" class="btn btn-outline">✏️ 修改结果</a>
+      <% } %>
+    </div>
   </div>
 
   <!-- 比赛信息 -->

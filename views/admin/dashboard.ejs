@@ -65,8 +65,9 @@
                     <button class="btn btn-sm btn-danger">删除</button>
                   </form>
                 <% } else { %>
-                  <a href="/admin/matches/<%= m.id %>/votes" class="btn btn-sm btn-outline">✏️ 投票</a>
-                  <a href="/matches/<%= m.id %>" class="btn btn-sm btn-outline">查看</a>
+                  <a href="/admin/matches/<%= m.id %>/votes"       class="btn btn-sm btn-outline">✏️ 投票</a>
+                  <a href="/admin/matches/<%= m.id %>/edit-result" class="btn btn-sm btn-warn">修改结果</a>
+                  <a href="/matches/<%= m.id %>"                   class="btn btn-sm btn-outline">查看</a>
                 <% } %>
               </div>
             </div>

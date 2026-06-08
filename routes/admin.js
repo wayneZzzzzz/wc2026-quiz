@@ -1,4 +1,5 @@
 const express = require('express');
+const { doSettle } = require('../lib/settle');
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin2026';
 
@@ -103,34 +104,25 @@ module.exports = function(db) {
     const losers  = votes.filter(v => v.choice !== result);
 
     // 未投票者：如勾选则纳入亏损池，扣 100 分但不计胜场
+    // 处理未投票者（先插票再统一结算）
     const allUsers = db.prepare('SELECT * FROM users').all();
     const voterIds = new Set(votes.map(v => v.user_id));
     const nonVoters = penalize_nonvoters === '1'
-      ? allUsers.filter(u => !voterIds.has(u.id))
-      : [];
+      ? allUsers.filter(u => !voterIds.has(u.id)) : [];
 
-    const totalLosers = losers.length + nonVoters.length;
-    const pointsPerWinner = winners.length > 0 ? Math.round(totalLosers * 100 / winners.length) : 0;
-
-    const settle = db.transaction(() => {
-      for (const w of winners) {
-        db.prepare('UPDATE users SET total_points=total_points+?, wins=wins+1 WHERE id=?').run(pointsPerWinner, w.user_id);
-        db.prepare('INSERT INTO point_logs (user_id,match_id,points,description) VALUES (?,?,?,?)').run(w.user_id, match.id, pointsPerWinner, `猜中！获得 ${pointsPerWinner} 分`);
-      }
-      for (const l of losers) {
-        db.prepare('UPDATE users SET total_points=total_points-100 WHERE id=?').run(l.user_id);
-        db.prepare('INSERT INTO point_logs (user_id,match_id,points,description) VALUES (?,?,?,?)').run(l.user_id, match.id, -100, '未猜中，扣除 100 分');
-      }
+    const hs = parseInt(home_score), as2 = parseInt(away_score);
+    db.transaction(() => {
+      // 先给未投票者插入投票记录（标记为"未投票"的随机错误选项）
       for (const u of nonVoters) {
-        db.prepare('UPDATE users SET total_points=total_points-100 WHERE id=?').run(u.id);
-        db.prepare('INSERT INTO point_logs (user_id,match_id,points,description) VALUES (?,?,?,?)').run(u.id, match.id, -100, '未参与竞猜，扣除 100 分');
+        const wrongChoice = ['a','b','c'].find(c => c !== result) || 'b';
+        db.prepare('INSERT OR IGNORE INTO votes (user_id,match_id,choice) VALUES (?,?,?)').run(u.id, match.id, wrongChoice);
+        db.prepare('UPDATE users SET total_votes=total_votes+1 WHERE id=?').run(u.id);
       }
-      const hs = parseInt(home_score), as2 = parseInt(away_score);
       db.prepare('UPDATE matches SET result=?,status=?,home_score=?,away_score=? WHERE id=?')
         .run(result, 'finished', isNaN(hs)?null:hs, isNaN(as2)?null:as2, match.id);
-    });
+    })();
 
-    settle();
+    doSettle(db, match.id);
     res.redirect('/admin');
   });
 
@@ -237,6 +229,41 @@ module.exports = function(db) {
       })();
     }
     res.redirect(`/admin/matches/${req.params.id}/votes`);
+  });
+
+  // ===== 重新结算（管理员补录投票后手动触发）=====
+  router.post('/matches/:id/re-settle', requireAdmin, (req, res) => {
+    const match = db.prepare('SELECT * FROM matches WHERE id=?').get(req.params.id);
+    if (!match || match.status !== 'finished') return res.redirect('/admin');
+    try {
+      doSettle(db, match.id);
+    } catch(e) {
+      console.error('[重新结算]', e.message);
+    }
+    res.redirect(`/admin/matches/${req.params.id}/votes`);
+  });
+
+  // ===== 修改已完结比赛的比分和结果（管理员纠错窗口）=====
+  router.get('/matches/:id/edit-result', requireAdmin, (req, res) => {
+    const match = db.prepare('SELECT * FROM matches WHERE id=?').get(req.params.id);
+    if (!match || match.status !== 'finished') return res.redirect('/admin');
+    const votes = db.prepare(`SELECT v.*, u.nickname FROM votes v JOIN users u ON v.user_id=u.id WHERE v.match_id=?`).all(match.id);
+    res.render('admin/edit-result', { title:'修改比赛结果', match, votes, error: null });
+  });
+
+  router.post('/matches/:id/edit-result', requireAdmin, (req, res) => {
+    const { result, home_score, away_score } = req.body;
+    const match = db.prepare('SELECT * FROM matches WHERE id=?').get(req.params.id);
+    if (!match || match.status !== 'finished') return res.redirect('/admin');
+    if (!['a','b','c'].includes(result)) {
+      const votes = db.prepare(`SELECT v.*, u.nickname FROM votes v JOIN users u ON v.user_id=u.id WHERE v.match_id=?`).all(match.id);
+      return res.render('admin/edit-result', { title:'修改比赛结果', match, votes, error:'请选择正确答案' });
+    }
+    const hs = parseInt(home_score), as2 = parseInt(away_score);
+    db.prepare('UPDATE matches SET result=?,home_score=?,away_score=? WHERE id=?')
+      .run(result, isNaN(hs)?match.home_score:hs, isNaN(as2)?match.away_score:as2, match.id);
+    doSettle(db, match.id);
+    res.redirect('/admin');
   });
 
   router.post('/matches/:id/delete', requireAdmin, (req, res) => {
