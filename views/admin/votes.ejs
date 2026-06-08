@@ -34,6 +34,22 @@
     </div>
   <% } %>
 
+  <!-- 按昵称补录 -->
+  <div class="card add-by-name-card">
+    <div class="abn-title">➕ 按昵称补录投票</div>
+    <p class="abn-desc">输入参与者昵称，选择选项后提交。若昵称已存在则合并到该账号；若不存在则自动创建。<% if(match.status==='finished'){%> <strong style="color:#dc2626">已完结比赛将直接扣 100 分。</strong><%}%></p>
+    <form method="POST" action="/admin/matches/<%= match.id %>/votes/add-by-name" class="abn-form">
+      <input type="text" name="nickname" class="form-input" placeholder="输入昵称..." maxlength="20" required style="flex:1">
+      <select name="choice" class="form-input va-select" required>
+        <option value="">选择选项...</option>
+        <option value="a">A · <%= rl(match.option_a, match) %></option>
+        <option value="b">B · <%= rl(match.option_b, match) %></option>
+        <option value="c">C · <%= rl(match.option_c, match) %></option>
+      </select>
+      <button class="btn btn-primary" type="submit"><%= match.status==='finished' ? '补录(-100分)' : '补录投票' %></button>
+    </form>
+  </div>
+
   <!-- 选项说明 -->
   <div class="vote-opts-ref">
     <span class="vor-item"><strong>A</strong> <%= rl(match.option_a, match) %></span>

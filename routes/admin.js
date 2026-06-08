@@ -181,6 +181,41 @@ module.exports = function(db) {
     res.redirect(`/admin/matches/${req.params.id}/votes`);
   });
 
+  // 按昵称补录（自动注册 + 投票）
+  router.post('/matches/:id/votes/add-by-name', requireAdmin, (req, res) => {
+    const { nickname, choice } = req.body;
+    const match = db.prepare('SELECT * FROM matches WHERE id=?').get(req.params.id);
+    if (!match) return res.redirect('/admin');
+    if (!nickname?.trim() || !['a','b','c'].includes(choice))
+      return res.redirect(`/admin/matches/${req.params.id}/votes`);
+
+    const clean = nickname.trim().slice(0, 20);
+
+    db.transaction(() => {
+      // 找或创建用户
+      let user = db.prepare('SELECT * FROM users WHERE nickname=?').get(clean);
+      if (!user) {
+        const r = db.prepare('INSERT INTO users (nickname) VALUES (?)').run(clean);
+        user = db.prepare('SELECT * FROM users WHERE id=?').get(r.lastInsertRowid);
+      }
+
+      // 已投过就跳过
+      const existing = db.prepare('SELECT id FROM votes WHERE user_id=? AND match_id=?').get(user.id, match.id);
+      if (existing) return;
+
+      db.prepare('INSERT INTO votes (user_id,match_id,choice) VALUES (?,?,?)').run(user.id, match.id, choice);
+      db.prepare('UPDATE users SET total_votes=total_votes+1 WHERE id=?').run(user.id);
+
+      if (match.status === 'finished') {
+        // 已完结：直接扣 100 分
+        db.prepare('UPDATE users SET total_points=total_points-100 WHERE id=?').run(user.id);
+        db.prepare('INSERT INTO point_logs (user_id,match_id,points,description) VALUES (?,?,?,?)').run(user.id, match.id, -100, '补录未投票，扣除 100 分');
+      }
+    })();
+
+    res.redirect(`/admin/matches/${req.params.id}/votes`);
+  });
+
   router.post('/matches/:id/votes/delete', requireAdmin, (req, res) => {
     const { user_id } = req.body;
     const match = db.prepare('SELECT * FROM matches WHERE id=?').get(req.params.id);
