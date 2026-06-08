@@ -82,6 +82,17 @@ initSqlJs().then(async SQL => {
     await importMatches();
     await updateOdds();
     setInterval(updateOdds, ODDS_UPDATE_INTERVAL);
+
+    // Render 免费版防休眠：每 14 分钟 ping 自己
+    if (process.env.RENDER_EXTERNAL_URL) {
+      const https = require('https');
+      setInterval(() => {
+        https.get(process.env.RENDER_EXTERNAL_URL, r =>
+          console.log(`[保活] ping ${r.statusCode}`)
+        ).on('error', () => {});
+      }, 14 * 60 * 1000);
+      console.log(`🏓 Render 保活已启动: ${process.env.RENDER_EXTERNAL_URL}`);
+    }
   });
 }).catch(err => {
   console.error('初始化失败:', err);
