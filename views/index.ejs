@@ -35,7 +35,11 @@
               </div>
               <div class="match-card-meta">
                 <span class="handicap-tag"><%= m.handicap_desc %></span>
-                <span class="match-time">🕐 <%= fmtBJ(m.match_time) %> 北京</span>
+                <% if (m.effectiveStatus === 'voting') { %>
+                  <span class="badge-voting-sm">🔴 投票中</span>
+                <% } else { %>
+                  <span class="match-time">🕐 <%= fmtBJ(m.match_time) %> 北京</span>
+                <% } %>
               </div>
             </a>
           <% }) %>
@@ -87,13 +91,14 @@
         <div class="result-list">
           <% finishedMatches.forEach(m => { %>
             <a href="/matches/<%= m.id %>" class="result-row">
-              <span><%= m.home_team %><%= flag(m.home_team) %>
+              <span class="result-teams">
+                <%= m.home_team %><%= flag(m.home_team) %>
                 <% if (m.home_score != null) { %>
                   <strong class="inline-score"><%= m.home_score %>-<%= m.away_score %></strong>
                 <% } %>
                 <%= flag(m.away_team) %><%= m.away_team %>
               </span>
-              <span class="result-answer"><%= m.result==='a'?m.option_a:m.result==='b'?m.option_b:m.option_c %></span>
+              <span class="result-answer"><%= rl(m.result==='a'?m.option_a:m.result==='b'?m.option_b:m.option_c, m) %></span>
             </a>
           <% }) %>
         </div>

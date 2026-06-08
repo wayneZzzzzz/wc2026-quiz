@@ -4,9 +4,10 @@ module.exports = function(db) {
   const router = express.Router();
 
   router.get('/', (req, res) => {
+    const { getEffectiveStatus } = require('./matches');
     const upcomingMatches = db.prepare(
       `SELECT * FROM matches WHERE status != 'finished' ORDER BY match_time ASC LIMIT 6`
-    ).all();
+    ).all().map(m => ({ ...m, effectiveStatus: getEffectiveStatus(m) }));
     const finishedMatches = db.prepare(
       `SELECT * FROM matches WHERE status = 'finished' ORDER BY match_time DESC LIMIT 4`
     ).all();

@@ -10,7 +10,7 @@ function getEffectiveStatus(match) {
   // 仅 upcoming 状态时才用时间自动判断
   const now = new Date();
   const matchTime = new Date(match.match_time.replace(' ','T') + ':00Z');
-  const openTime = new Date(matchTime.getTime() - 24 * 60 * 60 * 1000);
+  const openTime = new Date(matchTime.getTime() - 48 * 60 * 60 * 1000); // 提前2天开放
   if (now >= matchTime) return 'closed';
   if (now >= openTime) return 'voting';
   return 'upcoming';
