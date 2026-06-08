@@ -44,6 +44,7 @@
             </a>
           <% }) %>
         </div>
+        <a href="/matches" class="view-more-link">查看全部赛程 →</a>
       <% } %>
     </section>
 
@@ -91,14 +92,14 @@
         <div class="result-list">
           <% finishedMatches.forEach(m => { %>
             <a href="/matches/<%= m.id %>" class="result-row">
-              <span class="result-teams">
+              <div class="result-match">
                 <%= m.home_team %><%= flag(m.home_team) %>
                 <% if (m.home_score != null) { %>
                   <strong class="inline-score"><%= m.home_score %>-<%= m.away_score %></strong>
                 <% } %>
                 <%= flag(m.away_team) %><%= m.away_team %>
-              </span>
-              <span class="result-answer"><%= rl(m.result==='a'?m.option_a:m.result==='b'?m.option_b:m.option_c, m) %></span>
+              </div>
+              <div class="result-answer"><%= rl(m.result==='a'?m.option_a:m.result==='b'?m.option_b:m.option_c, m) %></div>
             </a>
           <% }) %>
         </div>

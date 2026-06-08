@@ -9,7 +9,7 @@ module.exports = function(db) {
       `SELECT * FROM matches WHERE status != 'finished' ORDER BY match_time ASC LIMIT 6`
     ).all().map(m => ({ ...m, effectiveStatus: getEffectiveStatus(m) }));
     const finishedMatches = db.prepare(
-      `SELECT * FROM matches WHERE status = 'finished' ORDER BY match_time DESC LIMIT 4`
+      `SELECT * FROM matches WHERE status = 'finished' ORDER BY match_time DESC LIMIT 2`
     ).all();
     const topUsers = db.prepare(
       `SELECT * FROM users ORDER BY total_points DESC, wins DESC`
