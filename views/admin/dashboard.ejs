@@ -65,6 +65,7 @@
                     <button class="btn btn-sm btn-danger">删除</button>
                   </form>
                 <% } else { %>
+                  <a href="/admin/matches/<%= m.id %>/votes" class="btn btn-sm btn-outline">✏️ 投票</a>
                   <a href="/matches/<%= m.id %>" class="btn btn-sm btn-outline">查看</a>
                 <% } %>
               </div>

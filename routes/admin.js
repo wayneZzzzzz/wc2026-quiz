@@ -134,38 +134,72 @@ module.exports = function(db) {
     res.redirect('/admin');
   });
 
-  // ===== 投票管理（添加/修改/删除任意用户的投票）=====
+  // ===== 投票管理（添加/修改/删除任意用户的投票，含已完结比赛）=====
   router.get('/matches/:id/votes', requireAdmin, (req, res) => {
     const match = db.prepare('SELECT * FROM matches WHERE id=?').get(req.params.id);
-    if (!match || match.status === 'finished') return res.redirect('/admin');
+    if (!match) return res.redirect('/admin');
     const allUsers = db.prepare('SELECT * FROM users ORDER BY nickname').all();
     const votes = db.prepare('SELECT * FROM votes WHERE match_id=?').all(match.id);
     const voteMap = {};
     votes.forEach(v => voteMap[v.user_id] = v.choice);
-    res.render('admin/votes', { title:'投票管理', match, allUsers, voteMap });
+    // 已结算记录（用于显示哪些人已扣过分）
+    const logMap = {};
+    db.prepare('SELECT * FROM point_logs WHERE match_id=?').all(match.id)
+      .forEach(l => logMap[l.user_id] = l.points);
+    res.render('admin/votes', { title:'投票管理', match, allUsers, voteMap, logMap });
   });
 
   router.post('/matches/:id/votes/set', requireAdmin, (req, res) => {
     const { user_id, choice } = req.body;
     const match = db.prepare('SELECT * FROM matches WHERE id=?').get(req.params.id);
-    if (!match || match.status === 'finished') return res.redirect('/admin');
+    if (!match) return res.redirect('/admin');
     if (!['a','b','c'].includes(choice)) return res.redirect(`/admin/matches/${req.params.id}/votes`);
+
     const existing = db.prepare('SELECT id FROM votes WHERE user_id=? AND match_id=?').get(user_id, match.id);
-    if (existing) {
-      db.prepare('UPDATE votes SET choice=? WHERE user_id=? AND match_id=?').run(choice, user_id, match.id);
+
+    if (match.status === 'finished') {
+      // 已完结：只允许对未投票者补录，直接扣 100 分，不重新结算赢家
+      if (existing) {
+        // 已有投票只更新选项记录，不重新计分
+        db.prepare('UPDATE votes SET choice=? WHERE user_id=? AND match_id=?').run(choice, user_id, match.id);
+      } else {
+        // 新增投票 → 视为猜错，扣 100 分
+        db.transaction(() => {
+          db.prepare('INSERT INTO votes (user_id,match_id,choice) VALUES (?,?,?)').run(user_id, match.id, choice);
+          db.prepare('UPDATE users SET total_votes=total_votes+1, total_points=total_points-100 WHERE id=?').run(user_id);
+          db.prepare('INSERT INTO point_logs (user_id,match_id,points,description) VALUES (?,?,?,?)').run(user_id, match.id, -100, '补录未投票，扣除 100 分');
+        })();
+      }
     } else {
-      db.prepare('INSERT INTO votes (user_id,match_id,choice) VALUES (?,?,?)').run(user_id, match.id, choice);
-      db.prepare('UPDATE users SET total_votes=total_votes+1 WHERE id=?').run(user_id);
+      if (existing) {
+        db.prepare('UPDATE votes SET choice=? WHERE user_id=? AND match_id=?').run(choice, user_id, match.id);
+      } else {
+        db.prepare('INSERT INTO votes (user_id,match_id,choice) VALUES (?,?,?)').run(user_id, match.id, choice);
+        db.prepare('UPDATE users SET total_votes=total_votes+1 WHERE id=?').run(user_id);
+      }
     }
     res.redirect(`/admin/matches/${req.params.id}/votes`);
   });
 
   router.post('/matches/:id/votes/delete', requireAdmin, (req, res) => {
     const { user_id } = req.body;
+    const match = db.prepare('SELECT * FROM matches WHERE id=?').get(req.params.id);
+    if (!match) return res.redirect('/admin');
     const existing = db.prepare('SELECT id FROM votes WHERE user_id=? AND match_id=?').get(user_id, req.params.id);
     if (existing) {
-      db.prepare('DELETE FROM votes WHERE user_id=? AND match_id=?').run(user_id, req.params.id);
-      db.prepare('UPDATE users SET total_votes=MAX(0,total_votes-1) WHERE id=?').run(user_id);
+      db.transaction(() => {
+        db.prepare('DELETE FROM votes WHERE user_id=? AND match_id=?').run(user_id, req.params.id);
+        db.prepare('UPDATE users SET total_votes=MAX(0,total_votes-1) WHERE id=?').run(user_id);
+        // 已完结比赛：同步撤销对应的积分记录
+        if (match.status === 'finished') {
+          const log = db.prepare('SELECT points FROM point_logs WHERE user_id=? AND match_id=?').get(user_id, req.params.id);
+          if (log) {
+            db.prepare('UPDATE users SET total_points=total_points-? WHERE id=?').run(log.points, user_id);
+            if (log.points > 0) db.prepare('UPDATE users SET wins=MAX(0,wins-1) WHERE id=?').run(user_id);
+            db.prepare('DELETE FROM point_logs WHERE user_id=? AND match_id=?').run(user_id, req.params.id);
+          }
+        }
+      })();
     }
     res.redirect(`/admin/matches/${req.params.id}/votes`);
   });

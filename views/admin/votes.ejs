@@ -4,19 +4,35 @@
   <a href="/admin" class="back-link">← 返回后台</a>
   <div class="page-header">
     <h1>✏️ 投票管理</h1>
-    <a href="/admin/matches/<%= match.id %>/result" class="btn btn-primary">去公布结果</a>
+    <% if (match.status !== 'finished') { %>
+      <a href="/admin/matches/<%= match.id %>/result" class="btn btn-primary">去公布结果</a>
+    <% } %>
   </div>
 
-  <div class="card" style="margin-bottom:1.5rem">
+  <!-- 比赛信息 -->
+  <div class="card" style="margin-bottom:1rem">
     <div class="mdc-teams" style="margin-bottom:.75rem">
-      <div class="mdc-team" style="font-size:1.2rem"><%= match.home_team %> <%= flag(match.home_team) %></div>
+      <div class="mdc-team" style="font-size:1.1rem"><%= match.home_team %> <%= flag(match.home_team) %></div>
       <div class="mdc-sep">VS</div>
-      <div class="mdc-team" style="font-size:1.2rem"><%= flag(match.away_team) %> <%= match.away_team %></div>
+      <div class="mdc-team" style="font-size:1.1rem"><%= flag(match.away_team) %> <%= match.away_team %></div>
     </div>
-    <div style="text-align:center">
+    <div style="text-align:center;display:flex;align-items:center;justify-content:center;gap:.75rem;flex-wrap:wrap">
       <span class="handicap-tag handicap-tag-lg"><%= match.handicap_desc %></span>
+      <% if (match.status === 'finished') { %>
+        <span class="mcf-status status-badge-finished">✅ 已完结</span>
+        <% if (match.home_score != null) { %>
+          <span class="fix-score"><%= match.home_score %> - <%= match.away_score %></span>
+        <% } %>
+      <% } %>
     </div>
   </div>
+
+  <!-- 已完结提示 -->
+  <% if (match.status === 'finished') { %>
+    <div class="alert alert-warn" style="margin-bottom:1rem">
+      ⚠️ 比赛已完结。<strong>对未投票者补录</strong>将直接扣除 100 分；<strong>删除</strong>将撤销对应积分记录。已投票者的选项仅更新记录，不重新计算积分。
+    </div>
+  <% } %>
 
   <!-- 选项说明 -->
   <div class="vote-opts-ref">
@@ -25,6 +41,10 @@
     <span class="vor-item"><strong>B</strong> <%= rl(match.option_b, match) %></span>
     <span class="vor-sep">·</span>
     <span class="vor-item"><strong>C</strong> <%= rl(match.option_c, match) %></span>
+    <% if (match.result) { %>
+      <span class="vor-sep">·</span>
+      <span style="color:#059669;font-weight:700">正确答案：<%= match.result.toUpperCase() %></span>
+    <% } %>
   </div>
 
   <!-- 用户投票列表 -->
@@ -35,36 +55,60 @@
       <div class="votes-admin-list">
         <% allUsers.forEach(u => {
              const choice = voteMap[u.id] || null;
+             const pts = logMap[u.id];
+             const isCorrect = match.result && choice === match.result;
+             const isWrong = match.result && choice && choice !== match.result;
+             const isPenalized = pts !== undefined && !choice; // 补录扣分
         %>
-          <div class="va-row">
+          <div class="va-row <%= isCorrect ? 'va-correct' : isWrong ? 'va-wrong' : '' %>">
             <div class="va-user">
               <span class="va-name"><%= u.nickname %></span>
               <% if (choice) { %>
                 <span class="va-current badge-<%= choice %>">
                   已选 <%= choice.toUpperCase() %> · <%= rl(choice==='a'?match.option_a:choice==='b'?match.option_b:match.option_c, match) %>
                 </span>
+                <% if (isCorrect) { %><span class="va-result-tag win-tag">✓ 猜中</span>
+                <% } else if (isWrong) { %><span class="va-result-tag lose-tag">✗ 猜错</span><% } %>
               <% } else { %>
-                <span class="va-unvoted">未投票</span>
+                <% if (pts !== undefined) { %>
+                  <span class="va-unvoted" style="color:#dc2626">已补录扣分 (<%= pts %>分)</span>
+                <% } else { %>
+                  <span class="va-unvoted">未投票</span>
+                <% } %>
               <% } %>
             </div>
             <div class="va-actions">
-              <!-- 设置/修改投票 -->
-              <form method="POST" action="/admin/matches/<%= match.id %>/votes/set" class="va-form">
-                <input type="hidden" name="user_id" value="<%= u.id %>">
-                <select name="choice" class="form-input va-select">
-                  <option value="">选择...</option>
-                  <option value="a" <%= choice==='a'?'selected':'' %>>A · <%= rl(match.option_a, match) %></option>
-                  <option value="b" <%= choice==='b'?'selected':'' %>>B · <%= rl(match.option_b, match) %></option>
-                  <option value="c" <%= choice==='c'?'selected':'' %>>C · <%= rl(match.option_c, match) %></option>
-                </select>
-                <button class="btn btn-sm btn-primary" type="submit">保存</button>
-              </form>
-              <!-- 删除投票 -->
-              <% if (choice) { %>
-                <form method="POST" action="/admin/matches/<%= match.id %>/votes/delete"
-                      onsubmit="return confirm('确认删除 <%= u.nickname %> 的投票？')">
+              <% if (!choice) { %>
+                <!-- 未投票：提供补录 -->
+                <form method="POST" action="/admin/matches/<%= match.id %>/votes/set" class="va-form">
                   <input type="hidden" name="user_id" value="<%= u.id %>">
-                  <button class="btn btn-sm btn-danger">删除</button>
+                  <select name="choice" class="form-input va-select">
+                    <option value="">补录选项...</option>
+                    <option value="a">A · <%= rl(match.option_a, match) %></option>
+                    <option value="b">B · <%= rl(match.option_b, match) %></option>
+                    <option value="c">C · <%= rl(match.option_c, match) %></option>
+                  </select>
+                  <button class="btn btn-sm btn-warn" type="submit">
+                    <%= match.status === 'finished' ? '补录(-100分)' : '补录' %>
+                  </button>
+                </form>
+              <% } else { %>
+                <!-- 已投票：可修改或删除 -->
+                <% if (match.status !== 'finished') { %>
+                  <form method="POST" action="/admin/matches/<%= match.id %>/votes/set" class="va-form">
+                    <input type="hidden" name="user_id" value="<%= u.id %>">
+                    <select name="choice" class="form-input va-select">
+                      <option value="a" <%= choice==='a'?'selected':'' %>>A · <%= rl(match.option_a, match) %></option>
+                      <option value="b" <%= choice==='b'?'selected':'' %>>B · <%= rl(match.option_b, match) %></option>
+                      <option value="c" <%= choice==='c'?'selected':'' %>>C · <%= rl(match.option_c, match) %></option>
+                    </select>
+                    <button class="btn btn-sm btn-primary" type="submit">修改</button>
+                  </form>
+                <% } %>
+                <form method="POST" action="/admin/matches/<%= match.id %>/votes/delete"
+                      onsubmit="return confirm('确认删除 <%= u.nickname %> 的投票？<%= match.status==="finished" ? "\\n已完结比赛：将同时撤销对应积分记录。" : "" %>')">
+                  <input type="hidden" name="user_id" value="<%= u.id %>">
+                  <button class="btn btn-sm btn-danger">删除<%= match.status==='finished' ? '并撤销积分' : '' %></button>
                 </form>
               <% } %>
             </div>
