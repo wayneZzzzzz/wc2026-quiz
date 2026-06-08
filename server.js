@@ -64,7 +64,7 @@ app.get('/events', (req, res) => {
 });
 
 initSqlJs().then(async SQL => {
-  initDb(SQL);
+  await initDb(SQL);
   const db = createWrapper();
   getDb.setDb(db);
 
