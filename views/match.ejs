@@ -7,16 +7,17 @@
     <div class="mdc-stage-row">
       <span class="mcf-stage"><%= match.stage %></span>
       <span class="mcf-status status-badge-<%= effectiveStatus %>" style="font-size:.85rem">
-        <% if(effectiveStatus==='upcoming'){%>⏳ 尚未开放<%}else if(effectiveStatus==='voting'){%>🔴 投票中<%}else if(effectiveStatus==='closed'){%>⏸ 等待公布<%}else{%>✅ 已结束<%}%>
+        <% if(effectiveStatus==='upcoming'){%>⏳ 尚未开放
+        <%}else if(effectiveStatus==='voting'){%>🔴 投票中
+        <%}else if(effectiveStatus==='closed'){%>⏸ 等待公布
+        <%}else{%>✅ 已结束<%}%>
       </span>
     </div>
-
     <div class="mdc-teams">
       <div class="mdc-team"><%= match.home_team %> <span class="team-flag"><%= flag(match.home_team) %></span></div>
       <div class="mdc-sep">VS</div>
       <div class="mdc-team"><span class="team-flag"><%= flag(match.away_team) %></span> <%= match.away_team %></div>
     </div>
-
     <div class="dual-time">
       <div class="dt-item">
         <span class="dt-label">🇨🇳 北京时间</span>
@@ -28,7 +29,6 @@
         <span class="dt-val"><%= fmtET(match.match_time) %></span>
       </div>
     </div>
-
     <div class="mdc-handicap">
       <span class="handicap-tag handicap-tag-lg"><%= match.handicap_desc %></span>
     </div>
@@ -36,7 +36,10 @@
     <% if (effectiveStatus === 'finished') { %>
       <div class="result-banner">
         <div class="result-label">最终结果</div>
-        <div class="result-answer"><%= match.result==='a'?match.option_a:match.result==='b'?match.option_b:match.option_c %></div>
+        <% if (match.home_score != null) { %>
+          <div class="result-score"><%= match.home_score %> - <%= match.away_score %></div>
+        <% } %>
+        <div class="result-answer"><%= rl(match.result==='a'?match.option_a:match.result==='b'?match.option_b:match.option_c, match) %></div>
         <% if (myLog) { %>
           <div class="my-result <%= myLog.points > 0 ? 'win' : 'lose' %>">
             <%= myLog.points > 0 ? '🎉' : '😢' %> <%= myLog.description %>
@@ -46,54 +49,63 @@
     <% } %>
   </div>
 
-  <!-- 投票区 -->
+  <!-- ===== 投票区 ===== -->
   <% if (effectiveStatus === 'voting') { %>
     <div class="vote-section">
       <% if (!currentUser) { %>
-        <div class="vote-prompt"><a href="/login" class="btn btn-primary">登录后参与投票</a></div>
+        <div class="vote-prompt">
+          <p style="margin-bottom:1rem;color:#6b7280">登录后才能参与投票</p>
+          <a href="/login" class="btn btn-primary btn-lg">加入竞猜</a>
+        </div>
       <% } else if (myVote) { %>
         <div class="voted-banner">
           <div class="voted-label">✅ 你已投票</div>
-          <div class="voted-choice">你选择了：<strong><%= myVote.choice==='a'?match.option_a:myVote.choice==='b'?match.option_b:match.option_c %></strong></div>
+          <div class="voted-choice">你选择了：<strong><%= rl(myVote.choice==='a'?match.option_a:myVote.choice==='b'?match.option_b:match.option_c, match) %></strong></div>
         </div>
       <% } else { %>
-        <h2 class="vote-title">选择你的预测</h2>
+        <h2 class="vote-title">你的预测是？</h2>
         <p class="vote-subtitle">盘口：<strong><%= match.handicap_desc %></strong></p>
-        <form method="POST" action="/votes" class="vote-form">
+        <form method="POST" action="/votes" id="vote-form">
           <input type="hidden" name="match_id" value="<%= match.id %>">
           <div class="vote-options">
-            <% [['a', match.option_a], ['b', match.option_b], ['c', match.option_c]].forEach(([k, label]) => { %>
-              <label class="vote-option">
-                <input type="radio" name="choice" value="<%= k %>" <%= k==='a'?'required':'' %>>
-                <div class="vote-option-box">
+            <% [['a', match.option_a], ['b', match.option_b], ['c', match.option_c]].forEach(([k, rawLabel]) => {
+               const label = rl(rawLabel, match); %>
+              <label class="vote-option" onclick="selectOption(this)">
+                <input type="radio" name="choice" value="<%= k %>">
+                <div class="vote-option-box" id="opt-<%= k %>">
                   <span class="vote-opt-letter"><%= k.toUpperCase() %></span>
                   <span class="vote-opt-label"><%= label %></span>
+                  <span class="vote-opt-check">✓</span>
                 </div>
               </label>
             <% }) %>
           </div>
-          <button type="submit" class="btn btn-primary btn-block btn-lg">确认投票</button>
-          <div class="vote-hint">投票后不可更改 · 投票后可查看他人选择</div>
+          <button type="submit" id="submit-btn" class="btn btn-primary btn-block btn-lg" disabled>
+            请先选择一个选项
+          </button>
+          <div class="vote-hint">提交后不可更改 · 提交后可查看他人选择</div>
         </form>
       <% } %>
     </div>
+
   <% } else if (effectiveStatus === 'upcoming') { %>
     <div class="info-box">
-      <p>📅 比赛前一天开放投票，请届时回来参与！</p>
+      <p>📅 比赛前一天开放投票，届时回来参与！</p>
       <div class="options-preview">
-        <% [['a', match.option_a], ['b', match.option_b], ['c', match.option_c]].forEach(([k, label]) => { %>
+        <% [['a', match.option_a], ['b', match.option_b], ['c', match.option_c]].forEach(([k, rawLabel]) => { %>
           <div class="op-item">
             <span class="vote-opt-letter vote-opt-letter-sm"><%= k.toUpperCase() %></span>
-            <span><%= label %></span>
+            <span><%= rl(rawLabel, match) %></span>
           </div>
         <% }) %>
       </div>
     </div>
+
   <% } else if (effectiveStatus === 'closed' && !myVote) { %>
     <div class="info-box info-box-warn"><p>⏸ 投票已截止，你未参与本场竞猜</p></div>
   <% } %>
 
-  <!-- 实时投票面板 -->
+  <!-- ===== 投票结果面板 ===== -->
   <div id="votes-panel">
     <%- include('partials/votes-panel', { match, effectiveStatus, allVotes, voteCounts }) %>
   </div>
@@ -104,10 +116,23 @@ const MATCH_ID = <%= match.id %>;
 const HAS_VOTED = <%= myVote ? 'true' : 'false' %>;
 const IS_FINISHED = '<%= effectiveStatus %>' === 'finished';
 const OPT = {
-  a: `<%= match.option_a.replace(/`/g,'\\`') %>`,
-  b: `<%= match.option_b.replace(/`/g,'\\`') %>`,
-  c: `<%= match.option_c.replace(/`/g,'\\`') %>`
+  a: `<%= rl(match.option_a, match).replace(/`/g,'\\`') %>`,
+  b: `<%= rl(match.option_b, match).replace(/`/g,'\\`') %>`,
+  c: `<%= rl(match.option_c, match).replace(/`/g,'\\`') %>`
 };
+
+function selectOption(label) {
+  // 高亮选中项
+  document.querySelectorAll('.vote-option-box').forEach(b => b.classList.remove('selected'));
+  label.querySelector('.vote-option-box').classList.add('selected');
+  label.querySelector('input').checked = true;
+  // 激活提交按钮
+  const btn = document.getElementById('submit-btn');
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '确认提交';
+  }
+}
 </script>
 <script src="/js/main.js"></script>
 <script src="/js/realtime.js"></script>

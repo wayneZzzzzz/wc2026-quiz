@@ -4,13 +4,13 @@ const path = require('path');
 const initSqlJs = require('sql.js');
 const { createWrapper, initDb } = require('./database');
 const getDb = require('./lib/init-db');
-const { FLAGS, OPTION_TIPS, fmtBJ, fmtET } = require('./lib/helpers');
+const { FLAGS, OPTION_TIPS, fmtBJ, fmtET, resolveLabel } = require('./lib/helpers');
 const importMatches = require('./scripts/import-matches');
 const updateOdds = require('./scripts/update-odds');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ODDS_UPDATE_INTERVAL = 60 * 60 * 1000;
+const ODDS_UPDATE_INTERVAL = 3 * 60 * 60 * 1000; // 3小时更新一次
 
 // SSE 广播
 const sseClients = new Set();
@@ -42,6 +42,9 @@ app.use((req, res, next) => {
   res.locals.tip = label => OPTION_TIPS[label] || '';
   res.locals.fmtBJ = fmtBJ;
   res.locals.fmtET = fmtET;
+  // 将通用标签（强队/弱队）替换为实际队名
+  res.locals.rl = (label, match) =>
+    resolveLabel(label, match.home_team, match.away_team, match.handicap_desc);
   next();
 });
 

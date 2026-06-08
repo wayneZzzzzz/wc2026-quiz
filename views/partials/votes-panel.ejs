@@ -3,9 +3,9 @@
     <h2 class="votes-title">投票情况 (<span id="vote-total"><%= voteCounts.total %></span> 人参与)</h2>
 
     <% const opts = [
-      {key:'a', label: match.option_a, count: voteCounts.a},
-      {key:'b', label: match.option_b, count: voteCounts.b},
-      {key:'c', label: match.option_c, count: voteCounts.c}
+      {key:'a', label: rl(match.option_a, match), count: voteCounts.a},
+      {key:'b', label: rl(match.option_b, match), count: voteCounts.b},
+      {key:'c', label: rl(match.option_c, match), count: voteCounts.c}
     ]; %>
 
     <div class="vote-stats" id="vote-stats">
