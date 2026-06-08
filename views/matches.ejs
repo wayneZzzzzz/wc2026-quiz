@@ -2,47 +2,127 @@
 
 <div class="container">
   <div class="page-header">
-    <h1>⚽ 赛程总览</h1>
+    <h1>⚽ 赛程</h1>
   </div>
 
-  <div class="filter-tabs">
-    <a href="/matches" class="filter-tab <%= !stage ? 'active' : '' %>">全部</a>
-    <% ['小组赛','32强','16强','八强','四强','决赛'].forEach(s => { %>
-      <a href="/matches?stage=<%= s %>" class="filter-tab <%= stage===s ? 'active' : '' %>"><%= s %></a>
-    <% }) %>
+  <!-- 主 Tab -->
+  <div class="main-tabs">
+    <a href="/matches?tab=group"    class="main-tab <%= tab==='group'    ? 'active' : '' %>">🏟 小组赛</a>
+    <a href="/matches?tab=knockout" class="main-tab <%= tab==='knockout' ? 'active' : '' %>">⚔️ 淘汰赛</a>
   </div>
 
-  <% if (matches.length === 0) { %>
-    <div class="empty-state" style="margin-top:3rem">该阶段暂无比赛</div>
-  <% } else { %>
-    <div class="matches-grid">
-      <% matches.forEach(m => { %>
-        <a href="/matches/<%= m.id %>" class="match-card-full status-<%= m.effectiveStatus %>">
-          <div class="mcf-top">
-            <span class="mcf-stage"><%= m.stage %></span>
-            <span class="mcf-status status-badge-<%= m.effectiveStatus %>">
-              <% if(m.effectiveStatus==='upcoming'){%>未开放<%}else if(m.effectiveStatus==='voting'){%>🔴 投票中<%}else if(m.effectiveStatus==='closed'){%>待公布<%}else{%>✅ 已结束<%}%>
-            </span>
+  <!-- ===== 小组赛 ===== -->
+  <% if (tab === 'group') { %>
+    <div class="groups-grid">
+      <% groups.forEach(g => { %>
+        <div class="group-block">
+          <!-- 组名 -->
+          <div class="group-title"><%=g.name%></div>
+
+          <!-- 积分榜 -->
+          <table class="standings-table">
+            <thead>
+              <tr><th>球队</th><th>场</th><th>胜</th><th>平</th><th>负</th><th>进</th><th>失</th><th>分</th></tr>
+            </thead>
+            <tbody>
+              <% g.standings.forEach((s, i) => { %>
+                <tr class="<%= i < 2 ? 'qualify' : '' %>">
+                  <td class="st-team">
+                    <span class="st-rank"><%= i+1 %></span>
+                    <%= s.team %><%= flag(s.team) %>
+                  </td>
+                  <td><%= s.p %></td>
+                  <td><%= s.w %></td>
+                  <td><%= s.d %></td>
+                  <td><%= s.l %></td>
+                  <td><%= s.gf %></td>
+                  <td><%= s.ga %></td>
+                  <td class="st-pts"><%= s.pts %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+
+          <!-- 本组赛事 -->
+          <div class="group-fixtures">
+            <% g.matches.forEach(m => { %>
+              <a href="/matches/<%= m.id %>" class="fixture-row status-fix-<%= m.effectiveStatus %>">
+                <div class="fix-teams">
+                  <span class="fix-team fix-home"><%= m.home_team %><%= flag(m.home_team) %></span>
+                  <% if (m.effectiveStatus === 'finished' && m.home_score != null) { %>
+                    <span class="fix-score"><%= m.home_score %> - <%= m.away_score %></span>
+                  <% } else { %>
+                    <span class="fix-vs">VS</span>
+                  <% } %>
+                  <span class="fix-team fix-away"><%= flag(m.away_team) %><%= m.away_team %></span>
+                </div>
+                <div class="fix-meta">
+                  <% if (m.effectiveStatus === 'finished') { %>
+                    <span class="fix-result-label">已结束</span>
+                  <% } else { %>
+                    <span class="fix-handicap"><%= m.handicap_desc %></span>
+                    <span class="fix-time">🇨🇳 <%= fmtBJ(m.match_time) %></span>
+                  <% } %>
+                  <% if (m.effectiveStatus === 'voting') { %>
+                    <span class="badge-voting">🔴 投票中</span>
+                  <% } %>
+                </div>
+              </a>
+            <% }) %>
           </div>
-          <div class="mcf-teams">
-            <div class="mcf-team home"><%= m.home_team %> <%= flag(m.home_team) %></div>
-            <div class="mcf-sep">VS</div>
-            <div class="mcf-team away"><%= flag(m.away_team) %> <%= m.away_team %></div>
-          </div>
-          <div class="mcf-bottom">
-            <span class="handicap-tag"><%= m.handicap_desc %></span>
-          </div>
-          <div class="match-times">
-            <span class="time-item">🇨🇳 <%= fmtBJ(m.match_time) %></span>
-            <span class="time-sep">·</span>
-            <span class="time-item time-et">🇺🇸 美东 <%= fmtET(m.match_time) %></span>
-          </div>
-          <% if (m.effectiveStatus === 'finished') { %>
-            <div class="mcf-result">结果：<strong><%= m.result==='a'?m.option_a:m.result==='b'?m.option_b:m.option_c %></strong></div>
-          <% } %>
-        </a>
+        </div>
       <% }) %>
     </div>
+
+    <% if (groups.length === 0) { %>
+      <div class="empty-state">小组赛赛程暂未录入</div>
+    <% } %>
+
+  <!-- ===== 淘汰赛 ===== -->
+  <% } else { %>
+    <% const stageNames = KNOCKOUT_STAGES.filter(s => knockoutMap[s]); %>
+    <% if (stageNames.length === 0) { %>
+      <div class="empty-state" style="margin-top:3rem">淘汰赛赛程暂未录入</div>
+    <% } else { %>
+      <div class="bracket-wrapper">
+        <% stageNames.forEach(stageName => { %>
+          <div class="bracket-round">
+            <div class="bracket-round-title"><%= stageName %></div>
+            <div class="bracket-matches">
+              <% knockoutMap[stageName].forEach(m => { %>
+                <a href="/matches/<%= m.id %>" class="bracket-match status-bm-<%= m.effectiveStatus %>">
+                  <div class="bm-team bm-home <%= m.effectiveStatus==='finished' && m.home_score > m.away_score ? 'bm-winner' : '' %>">
+                    <span class="bm-flag"><%= flag(m.home_team) %></span>
+                    <span class="bm-name"><%= m.home_team %></span>
+                    <% if (m.effectiveStatus==='finished' && m.home_score != null) { %>
+                      <span class="bm-score"><%= m.home_score %></span>
+                    <% } %>
+                  </div>
+                  <div class="bm-team bm-away <%= m.effectiveStatus==='finished' && m.away_score > m.home_score ? 'bm-winner' : '' %>">
+                    <span class="bm-flag"><%= flag(m.away_team) %></span>
+                    <span class="bm-name"><%= m.away_team %></span>
+                    <% if (m.effectiveStatus==='finished' && m.away_score != null) { %>
+                      <span class="bm-score"><%= m.away_score %></span>
+                    <% } %>
+                  </div>
+                  <% if (m.effectiveStatus !== 'finished') { %>
+                    <div class="bm-footer">
+                      <span class="fix-handicap"><%= m.handicap_desc %></span>
+                      <span class="fix-time">🇨🇳 <%= fmtBJ(m.match_time) %></span>
+                      <% if (m.effectiveStatus==='voting') { %><span class="badge-voting">🔴 投票中</span><% } %>
+                    </div>
+                  <% } else { %>
+                    <div class="bm-footer">
+                      <span class="fix-result-label">已结束</span>
+                    </div>
+                  <% } %>
+                </a>
+              <% }) %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
   <% } %>
 </div>
 

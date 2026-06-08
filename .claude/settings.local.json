@@ -6,7 +6,13 @@
       "Read(//opt/homebrew/**)",
       "Read(//Users/weizhang/.nvm/**)",
       "Bash(ls /opt/homebrew/bin/ | grep -i node; ls /usr/local/bin/ | grep -i node; find /opt -name \"node\" -type f 2>/dev/null | head -5)",
-      "Bash(find /usr /opt ~/Library -name \"node\" -type f 2>/dev/null | head -5; ls ~/Downloads 2>/dev/null | head)"
+      "Bash(find /usr /opt ~/Library -name \"node\" -type f 2>/dev/null | head -5; ls ~/Downloads 2>/dev/null | head)",
+      "Bash(rm -f /tmp/a.jar)",
+      "Bash(curl -s -L -c /tmp/a.jar -b /tmp/a.jar -X POST http://localhost:3000/admin/login -d password=admin2026)",
+      "Bash(curl -s -L -c /tmp/a.jar -b /tmp/a.jar -X POST http://localhost:3000/admin/matches/13/status -d status=closed)",
+      "Bash(curl -s -L -c /tmp/a.jar -b /tmp/a.jar -X POST http://localhost:3000/admin/matches/13/result -d 'result=a&home_score=2&away_score=0')",
+      "Bash(curl -s -c /tmp/a2.jar -b /tmp/a2.jar http://localhost:3000/admin/login)",
+      "Bash(curl -s -c /tmp/a2.jar -b /tmp/a2.jar -X POST http://localhost:3000/admin/login -d password=admin2026 -D /tmp/headers.txt)"
     ]
   }
 }

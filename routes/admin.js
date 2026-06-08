@@ -85,7 +85,7 @@ module.exports = function(db) {
   });
 
   router.post('/matches/:id/result', requireAdmin, (req, res) => {
-    const { result } = req.body;
+    const { result, home_score, away_score } = req.body;
     const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(req.params.id);
     if (!match) return res.redirect('/admin');
     if (match.status === 'finished') return res.redirect('/admin');
@@ -109,7 +109,10 @@ module.exports = function(db) {
         db.prepare('UPDATE users SET total_points = total_points - 100 WHERE id = ?').run(l.user_id);
         db.prepare('INSERT INTO point_logs (user_id, match_id, points, description) VALUES (?, ?, ?, ?)').run(l.user_id, match.id, -100, '未猜中，扣除 100 分');
       }
-      db.prepare('UPDATE matches SET result = ?, status = ? WHERE id = ?').run(result, 'finished', match.id);
+      const hs = parseInt(home_score);
+      const as = parseInt(away_score);
+      db.prepare('UPDATE matches SET result=?, status=?, home_score=?, away_score=? WHERE id=?')
+        .run(result, 'finished', isNaN(hs) ? null : hs, isNaN(as) ? null : as, match.id);
     });
 
     settle();
