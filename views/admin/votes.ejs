@@ -1,0 +1,78 @@
+<%- include('../partials/header', {title}) %>
+
+<div class="container container-narrow">
+  <a href="/admin" class="back-link">← 返回后台</a>
+  <div class="page-header">
+    <h1>✏️ 投票管理</h1>
+    <a href="/admin/matches/<%= match.id %>/result" class="btn btn-primary">去公布结果</a>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="mdc-teams" style="margin-bottom:.75rem">
+      <div class="mdc-team" style="font-size:1.2rem"><%= match.home_team %> <%= flag(match.home_team) %></div>
+      <div class="mdc-sep">VS</div>
+      <div class="mdc-team" style="font-size:1.2rem"><%= flag(match.away_team) %> <%= match.away_team %></div>
+    </div>
+    <div style="text-align:center">
+      <span class="handicap-tag handicap-tag-lg"><%= match.handicap_desc %></span>
+    </div>
+  </div>
+
+  <!-- 选项说明 -->
+  <div class="vote-opts-ref">
+    <span class="vor-item"><strong>A</strong> <%= rl(match.option_a, match) %></span>
+    <span class="vor-sep">·</span>
+    <span class="vor-item"><strong>B</strong> <%= rl(match.option_b, match) %></span>
+    <span class="vor-sep">·</span>
+    <span class="vor-item"><strong>C</strong> <%= rl(match.option_c, match) %></span>
+  </div>
+
+  <!-- 用户投票列表 -->
+  <div class="card">
+    <% if (allUsers.length === 0) { %>
+      <div class="empty-state">还没有用户注册</div>
+    <% } else { %>
+      <div class="votes-admin-list">
+        <% allUsers.forEach(u => {
+             const choice = voteMap[u.id] || null;
+        %>
+          <div class="va-row">
+            <div class="va-user">
+              <span class="va-name"><%= u.nickname %></span>
+              <% if (choice) { %>
+                <span class="va-current badge-<%= choice %>">
+                  已选 <%= choice.toUpperCase() %> · <%= rl(choice==='a'?match.option_a:choice==='b'?match.option_b:match.option_c, match) %>
+                </span>
+              <% } else { %>
+                <span class="va-unvoted">未投票</span>
+              <% } %>
+            </div>
+            <div class="va-actions">
+              <!-- 设置/修改投票 -->
+              <form method="POST" action="/admin/matches/<%= match.id %>/votes/set" class="va-form">
+                <input type="hidden" name="user_id" value="<%= u.id %>">
+                <select name="choice" class="form-input va-select">
+                  <option value="">选择...</option>
+                  <option value="a" <%= choice==='a'?'selected':'' %>>A · <%= rl(match.option_a, match) %></option>
+                  <option value="b" <%= choice==='b'?'selected':'' %>>B · <%= rl(match.option_b, match) %></option>
+                  <option value="c" <%= choice==='c'?'selected':'' %>>C · <%= rl(match.option_c, match) %></option>
+                </select>
+                <button class="btn btn-sm btn-primary" type="submit">保存</button>
+              </form>
+              <!-- 删除投票 -->
+              <% if (choice) { %>
+                <form method="POST" action="/admin/matches/<%= match.id %>/votes/delete"
+                      onsubmit="return confirm('确认删除 <%= u.nickname %> 的投票？')">
+                  <input type="hidden" name="user_id" value="<%= u.id %>">
+                  <button class="btn btn-sm btn-danger">删除</button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

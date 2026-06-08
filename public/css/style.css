@@ -527,6 +527,52 @@ a { color: inherit; text-decoration: none; }
 .inline-form { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
 .form-input-sm { padding: .35rem .7rem; font-size: .85rem; border-radius: 6px; width: 130px; }
 
+/* ===== Vote Admin Page ===== */
+.vote-opts-ref {
+  display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;
+  background:#f0fdf4; border:1px solid #a7f3d0; border-radius:8px;
+  padding:.6rem 1rem; margin-bottom:1rem; font-size:.85rem;
+}
+.vor-item { color:#065f46; }
+.vor-sep  { color:#a7f3d0; }
+.votes-admin-list { display:flex; flex-direction:column; gap:.5rem; }
+.va-row {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:1rem; padding:.65rem .75rem; border-radius:8px;
+  background:#fafafa; border:1px solid #f3f4f6; flex-wrap:wrap;
+}
+.va-user  { display:flex; align-items:center; gap:.6rem; flex:1; min-width:0; }
+.va-name  { font-weight:600; font-size:.9rem; white-space:nowrap; }
+.va-current { font-size:.75rem; padding:.15rem .55rem; border-radius:12px; font-weight:600; }
+.badge-a  { background:#dbeafe; color:#1d4ed8; }
+.badge-b  { background:#fef9c3; color:#854d0e; }
+.badge-c  { background:#fce7f3; color:#9d174d; }
+.va-unvoted { font-size:.75rem; color:#9ca3af; font-style:italic; }
+.va-actions { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
+.va-form  { display:flex; align-items:center; gap:.4rem; }
+.va-select { width:auto; padding:.3rem .5rem; font-size:.8rem; min-width:160px; }
+
+/* 未投票者提示框 */
+.non-voters-box {
+  background:#fffbeb; border:1px solid #fde68a; border-radius:8px;
+  padding:.65rem 1rem; margin-bottom:1rem; font-size:.85rem;
+}
+.nv-title  { color:#92400e; display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
+.nv-chip   { background:#fef3c7; padding:.1rem .5rem; border-radius:12px; font-weight:600; }
+
+/* 扣分选项 */
+.penalize-box {
+  background:#f0fdf4; border:1px solid #a7f3d0; border-radius:10px;
+  padding:1rem 1.25rem;
+}
+.penalize-label {
+  display:flex; align-items:flex-start; gap:.75rem; cursor:pointer;
+}
+.penalize-label input[type=checkbox] { margin-top:.2rem; width:1rem; height:1rem; flex-shrink:0; }
+.penalize-content { display:flex; flex-direction:column; gap:.2rem; }
+.penalize-content strong { font-size:.9rem; color:#065f46; }
+.penalize-desc { font-size:.78rem; color:#6b7280; line-height:1.5; }
+
 /* ===== Empty State ===== */
 .empty-state { color: #9ca3af; font-size: .9rem; padding: 2rem; text-align: center; }
 

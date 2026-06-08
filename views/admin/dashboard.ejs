@@ -59,6 +59,7 @@
                       <button class="btn btn-sm btn-warn">截止投票</button>
                     </form>
                   <% } %>
+                  <a href="/admin/matches/<%= m.id %>/votes" class="btn btn-sm btn-outline">✏️ 投票</a>
                   <a href="/admin/matches/<%= m.id %>/result" class="btn btn-sm btn-success">公布结果</a>
                   <form method="POST" action="/admin/matches/<%= m.id %>/delete" style="display:inline" onsubmit="return confirm('确认删除该比赛及所有投票？')">
                     <button class="btn btn-sm btn-danger">删除</button>

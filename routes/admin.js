@@ -81,42 +81,93 @@ module.exports = function(db) {
       SELECT v.id, v.user_id, v.match_id, v.choice, v.created_at, u.nickname
       FROM votes v JOIN users u ON v.user_id = u.id WHERE v.match_id = ?
     `).all(match.id);
-    res.render('admin/result', { title: '公布结果', match, votes, error: null });
+    const allUsers = db.prepare('SELECT * FROM users').all();
+    const voterIds = new Set(votes.map(v => v.user_id));
+    const nonVoters = allUsers.filter(u => !voterIds.has(u.id));
+    res.render('admin/result', { title: '公布结果', match, votes, nonVoters, error: null });
   });
 
   router.post('/matches/:id/result', requireAdmin, (req, res) => {
-    const { result, home_score, away_score } = req.body;
+    const { result, home_score, away_score, penalize_nonvoters } = req.body;
     const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(req.params.id);
     if (!match) return res.redirect('/admin');
     if (match.status === 'finished') return res.redirect('/admin');
-    if (!['a', 'b', 'c'].includes(result)) {
-      const votes = db.prepare(`SELECT v.*, u.nickname FROM votes v JOIN users u ON v.user_id = u.id WHERE v.match_id = ?`).all(match.id);
-      return res.render('admin/result', { title: '公布结果', match, votes, error: '请选择正确答案' });
+
+    const allVotes = db.prepare(`SELECT v.*, u.nickname FROM votes v JOIN users u ON v.user_id=u.id WHERE v.match_id=?`).all(match.id);
+    if (!['a','b','c'].includes(result)) {
+      return res.render('admin/result', { title:'公布结果', match, votes: allVotes, error:'请选择正确答案' });
     }
 
-    const votes = db.prepare('SELECT * FROM votes WHERE match_id = ?').all(match.id);
+    const votes = db.prepare('SELECT * FROM votes WHERE match_id=?').all(match.id);
     const winners = votes.filter(v => v.choice === result);
-    const losers = votes.filter(v => v.choice !== result);
-    const totalLostPoints = losers.length * 100;
-    const pointsPerWinner = winners.length > 0 ? Math.round(totalLostPoints / winners.length) : 0;
+    const losers  = votes.filter(v => v.choice !== result);
+
+    // 未投票者：如勾选则纳入亏损池，扣 100 分但不计胜场
+    const allUsers = db.prepare('SELECT * FROM users').all();
+    const voterIds = new Set(votes.map(v => v.user_id));
+    const nonVoters = penalize_nonvoters === '1'
+      ? allUsers.filter(u => !voterIds.has(u.id))
+      : [];
+
+    const totalLosers = losers.length + nonVoters.length;
+    const pointsPerWinner = winners.length > 0 ? Math.round(totalLosers * 100 / winners.length) : 0;
 
     const settle = db.transaction(() => {
       for (const w of winners) {
-        db.prepare('UPDATE users SET total_points = total_points + ?, wins = wins + 1 WHERE id = ?').run(pointsPerWinner, w.user_id);
-        db.prepare('INSERT INTO point_logs (user_id, match_id, points, description) VALUES (?, ?, ?, ?)').run(w.user_id, match.id, pointsPerWinner, `猜中！获得 ${pointsPerWinner} 分`);
+        db.prepare('UPDATE users SET total_points=total_points+?, wins=wins+1 WHERE id=?').run(pointsPerWinner, w.user_id);
+        db.prepare('INSERT INTO point_logs (user_id,match_id,points,description) VALUES (?,?,?,?)').run(w.user_id, match.id, pointsPerWinner, `猜中！获得 ${pointsPerWinner} 分`);
       }
       for (const l of losers) {
-        db.prepare('UPDATE users SET total_points = total_points - 100 WHERE id = ?').run(l.user_id);
-        db.prepare('INSERT INTO point_logs (user_id, match_id, points, description) VALUES (?, ?, ?, ?)').run(l.user_id, match.id, -100, '未猜中，扣除 100 分');
+        db.prepare('UPDATE users SET total_points=total_points-100 WHERE id=?').run(l.user_id);
+        db.prepare('INSERT INTO point_logs (user_id,match_id,points,description) VALUES (?,?,?,?)').run(l.user_id, match.id, -100, '未猜中，扣除 100 分');
       }
-      const hs = parseInt(home_score);
-      const as = parseInt(away_score);
-      db.prepare('UPDATE matches SET result=?, status=?, home_score=?, away_score=? WHERE id=?')
-        .run(result, 'finished', isNaN(hs) ? null : hs, isNaN(as) ? null : as, match.id);
+      for (const u of nonVoters) {
+        db.prepare('UPDATE users SET total_points=total_points-100 WHERE id=?').run(u.id);
+        db.prepare('INSERT INTO point_logs (user_id,match_id,points,description) VALUES (?,?,?,?)').run(u.id, match.id, -100, '未参与竞猜，扣除 100 分');
+      }
+      const hs = parseInt(home_score), as2 = parseInt(away_score);
+      db.prepare('UPDATE matches SET result=?,status=?,home_score=?,away_score=? WHERE id=?')
+        .run(result, 'finished', isNaN(hs)?null:hs, isNaN(as2)?null:as2, match.id);
     });
 
     settle();
     res.redirect('/admin');
+  });
+
+  // ===== 投票管理（添加/修改/删除任意用户的投票）=====
+  router.get('/matches/:id/votes', requireAdmin, (req, res) => {
+    const match = db.prepare('SELECT * FROM matches WHERE id=?').get(req.params.id);
+    if (!match || match.status === 'finished') return res.redirect('/admin');
+    const allUsers = db.prepare('SELECT * FROM users ORDER BY nickname').all();
+    const votes = db.prepare('SELECT * FROM votes WHERE match_id=?').all(match.id);
+    const voteMap = {};
+    votes.forEach(v => voteMap[v.user_id] = v.choice);
+    res.render('admin/votes', { title:'投票管理', match, allUsers, voteMap });
+  });
+
+  router.post('/matches/:id/votes/set', requireAdmin, (req, res) => {
+    const { user_id, choice } = req.body;
+    const match = db.prepare('SELECT * FROM matches WHERE id=?').get(req.params.id);
+    if (!match || match.status === 'finished') return res.redirect('/admin');
+    if (!['a','b','c'].includes(choice)) return res.redirect(`/admin/matches/${req.params.id}/votes`);
+    const existing = db.prepare('SELECT id FROM votes WHERE user_id=? AND match_id=?').get(user_id, match.id);
+    if (existing) {
+      db.prepare('UPDATE votes SET choice=? WHERE user_id=? AND match_id=?').run(choice, user_id, match.id);
+    } else {
+      db.prepare('INSERT INTO votes (user_id,match_id,choice) VALUES (?,?,?)').run(user_id, match.id, choice);
+      db.prepare('UPDATE users SET total_votes=total_votes+1 WHERE id=?').run(user_id);
+    }
+    res.redirect(`/admin/matches/${req.params.id}/votes`);
+  });
+
+  router.post('/matches/:id/votes/delete', requireAdmin, (req, res) => {
+    const { user_id } = req.body;
+    const existing = db.prepare('SELECT id FROM votes WHERE user_id=? AND match_id=?').get(user_id, req.params.id);
+    if (existing) {
+      db.prepare('DELETE FROM votes WHERE user_id=? AND match_id=?').run(user_id, req.params.id);
+      db.prepare('UPDATE users SET total_votes=MAX(0,total_votes-1) WHERE id=?').run(user_id);
+    }
+    res.redirect(`/admin/matches/${req.params.id}/votes`);
   });
 
   router.post('/matches/:id/delete', requireAdmin, (req, res) => {

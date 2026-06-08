@@ -14,13 +14,27 @@
       <span class="handicap-tag handicap-tag-lg"><%= match.handicap_desc %></span>
     </div>
 
-    <% const counts={a:0,b:0,c:0}; votes.forEach(v=>counts[v.choice]++); %>
+    <%
+      const counts = {a:0, b:0, c:0};
+      votes.forEach(v => counts[v.choice]++);
+      const totalVoters = votes.length;
+    %>
+
+    <!-- 投票统计 -->
     <div class="result-vote-summary">
-      <div class="rvs-item"><span class="vote-opt-letter vote-opt-letter-sm">A</span><%= match.option_a %> <strong><%= counts.a %> 人</strong></div>
-      <div class="rvs-item"><span class="vote-opt-letter vote-opt-letter-sm">B</span><%= match.option_b %> <strong><%= counts.b %> 人</strong></div>
-      <div class="rvs-item"><span class="vote-opt-letter vote-opt-letter-sm">C</span><%= match.option_c %> <strong><%= counts.c %> 人</strong></div>
-      <div class="rvs-total">共 <%= votes.length %> 人参与</div>
+      <div class="rvs-item"><span class="vote-opt-letter vote-opt-letter-sm">A</span><%= rl(match.option_a, match) %> <strong><%= counts.a %> 人</strong></div>
+      <div class="rvs-item"><span class="vote-opt-letter vote-opt-letter-sm">B</span><%= rl(match.option_b, match) %> <strong><%= counts.b %> 人</strong></div>
+      <div class="rvs-item"><span class="vote-opt-letter vote-opt-letter-sm">C</span><%= rl(match.option_c, match) %> <strong><%= counts.c %> 人</strong></div>
+      <div class="rvs-total">共 <%= totalVoters %> 人参与</div>
     </div>
+
+    <% if (nonVoters && nonVoters.length > 0) { %>
+      <div class="non-voters-box">
+        <div class="nv-title">⚠️ 未投票（<%= nonVoters.length %> 人）：
+          <% nonVoters.forEach(u => { %><span class="nv-chip"><%= u.nickname %></span><% }) %>
+        </div>
+      </div>
+    <% } %>
 
     <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
 
@@ -43,22 +57,36 @@
         <div class="result-options">
           <label class="result-option">
             <input type="radio" name="result" value="a" required>
-            <div class="result-option-box">A · <%= match.option_a %> （<%= counts.a %> 人）</div>
+            <div class="result-option-box">A · <%= rl(match.option_a, match) %> （<%= counts.a %> 人）</div>
           </label>
           <label class="result-option">
             <input type="radio" name="result" value="b">
-            <div class="result-option-box">B · <%= match.option_b %> （<%= counts.b %> 人）</div>
+            <div class="result-option-box">B · <%= rl(match.option_b, match) %> （<%= counts.b %> 人）</div>
           </label>
           <label class="result-option">
             <input type="radio" name="result" value="c">
-            <div class="result-option-box">C · <%= match.option_c %> （<%= counts.c %> 人）</div>
+            <div class="result-option-box">C · <%= rl(match.option_c, match) %> （<%= counts.c %> 人）</div>
           </label>
         </div>
-        <div class="form-hint alert-warn" style="margin-top:.75rem">⚠️ 确认后自动结算积分，不可撤销</div>
       </div>
 
+      <!-- 未投票者处理 -->
+      <% if (nonVoters && nonVoters.length > 0) { %>
+        <div class="form-group penalize-box">
+          <label class="penalize-label">
+            <input type="checkbox" name="penalize_nonvoters" value="1" checked>
+            <div class="penalize-content">
+              <strong>对 <%= nonVoters.length %> 位未投票者扣 100 分</strong>
+              <span class="penalize-desc">扣分纳入奖池（猜中者可赢得更多），不计胜场。取消勾选则未投票者不受影响。</span>
+            </div>
+          </label>
+        </div>
+      <% } %>
+
+      <div class="form-hint alert-warn" style="margin-top:.5rem">⚠️ 确认后自动结算积分，不可撤销</div>
+
       <div class="form-actions">
-        <a href="/admin" class="btn btn-outline">取消</a>
+        <a href="/admin/matches/<%= match.id %>/votes" class="btn btn-outline">先修改投票</a>
         <button type="submit" class="btn btn-primary"
           onclick="return confirm('确认公布结果并结算积分？')">公布并结算</button>
       </div>
