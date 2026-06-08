@@ -5,6 +5,9 @@ const KNOCKOUT_STAGES = ['32强','16强','八强','四强','决赛'];
 function getEffectiveStatus(match) {
   if (match.status === 'finished') return 'finished';
   if (match.status === 'closed') return 'closed';
+  if (match.status === 'voting') return 'voting'; // 管理员手动开放，直接生效
+
+  // 仅 upcoming 状态时才用时间自动判断
   const now = new Date();
   const matchTime = new Date(match.match_time.replace(' ','T') + ':00Z');
   const openTime = new Date(matchTime.getTime() - 24 * 60 * 60 * 1000);
