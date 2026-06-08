@@ -159,4 +159,5 @@ async function initDb(SqlLib) {
   save();
 }
 
-module.exports = { createWrapper, initDb };
+const getDb = () => sqlDb; // 供外部立即获取当前 db 实例
+module.exports = { createWrapper, initDb, get sqlDb() { return sqlDb; } };

@@ -85,11 +85,20 @@ initSqlJs().then(async SQL => {
     res.render('pick-champion', { title: '预测冠军', teams: ALL_TEAMS });
   });
 
-  app.post('/pick-champion', (req, res) => {
+  app.post('/pick-champion', async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     const { champion } = req.body;
-    if (champion && FLAGS[champion]) {
-      db.prepare('UPDATE users SET predicted_champion=? WHERE id=?').run(champion, req.session.user.id);
+    if (champion && champion.trim()) {
+      db.prepare('UPDATE users SET predicted_champion=? WHERE id=?').run(champion.trim(), req.session.user.id);
+      // 立即强制同步 Gist，不等防抖（冠军选择是关键数据）
+      const gist = require('./lib/gist-backup');
+      if (gist.isEnabled()) {
+        const { sqlDb } = require('./database');
+        if (sqlDb) {
+          try { await gist.upload(Buffer.from(sqlDb.export())); }
+          catch(e) { console.warn('[冠军] Gist 同步失败:', e.message); }
+        }
+      }
     }
     res.redirect('/');
   });
