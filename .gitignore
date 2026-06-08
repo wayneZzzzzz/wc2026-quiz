@@ -1,0 +1,5 @@
+node_modules/
+worldcup.db.bin
+*.db
+.env
+npm-debug.log

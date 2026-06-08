@@ -1,0 +1,86 @@
+<%- include('partials/header', {title}) %>
+
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">FIFA World Cup 2026</div>
+    <h1 class="hero-title">世界杯竞猜</h1>
+    <p class="hero-subtitle">预测每场比赛结果，赢取积分，问鼎冠军！</p>
+    <% if (!currentUser) { %>
+      <a href="/login" class="btn btn-lg btn-primary">立即加入</a>
+    <% } else { %>
+      <a href="/matches" class="btn btn-lg btn-primary">去投票</a>
+    <% } %>
+  </div>
+</div>
+
+<div class="container">
+  <div class="home-grid">
+
+    <section class="section">
+      <div class="section-header">
+        <h2>🗓 即将开赛</h2>
+        <a href="/matches" class="link-more">查看全部 →</a>
+      </div>
+      <% if (upcomingMatches.length === 0) { %>
+        <div class="empty-state">暂无即将开始的比赛</div>
+      <% } else { %>
+        <div class="match-list">
+          <% upcomingMatches.forEach(m => { %>
+            <a href="/matches/<%= m.id %>" class="match-card-sm">
+              <div class="match-card-stage"><%= m.stage %></div>
+              <div class="match-card-teams">
+                <span class="team"><%= m.home_team %><%= flag(m.home_team) %></span>
+                <span class="vs">VS</span>
+                <span class="team team-r"><%= flag(m.away_team) %><%= m.away_team %></span>
+              </div>
+              <div class="match-card-meta">
+                <span class="handicap-tag"><%= m.handicap_desc %></span>
+                <span class="match-time">🕐 <%= fmtBJ(m.match_time) %> 北京</span>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>🏆 积分榜 Top 5</h2>
+        <a href="/leaderboard" class="link-more">完整排行 →</a>
+      </div>
+      <% if (topUsers.length === 0) { %>
+        <div class="empty-state">还没有参与者</div>
+      <% } else { %>
+        <div class="leaderboard-mini">
+          <% topUsers.forEach((u, i) => { %>
+            <div class="lb-row <%= i === 0 ? 'lb-first' : '' %>">
+              <span class="lb-rank">
+                <% if (i===0){%>🥇<%}else if(i===1){%>🥈<%}else if(i===2){%>🥉<%}else{%><%= i+1 %><%}%>
+              </span>
+              <span class="lb-name"><%= u.nickname %></span>
+              <span class="lb-pts"><%= u.total_points > 0 ? '+' : '' %><%= u.total_points %> pts</span>
+              <span class="lb-wins"><%= u.wins %>场</span>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+
+      <% if (finishedMatches.length > 0) { %>
+        <div class="section-header" style="margin-top:2rem">
+          <h2>✅ 最近结果</h2>
+        </div>
+        <div class="result-list">
+          <% finishedMatches.forEach(m => { %>
+            <a href="/matches/<%= m.id %>" class="result-row">
+              <span><%= m.home_team %><%= flag(m.home_team) %> vs <%= flag(m.away_team) %><%= m.away_team %></span>
+              <span class="result-answer">答：<strong><%= m.result==='a'?m.option_a:m.result==='b'?m.option_b:m.option_c %></strong></span>
+            </a>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+
+  </div>
+</div>
+
+<%- include('partials/footer') %>

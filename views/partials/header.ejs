@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> · 世界杯竞猜</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">⚽ 世界杯竞猜 2026</a>
+    <div class="nav-links">
+      <a href="/matches">赛程</a>
+      <a href="/leaderboard">排行榜</a>
+      <% if (currentUser) { %>
+        <span class="nav-user">👤 <%= currentUser.nickname %></span>
+        <a href="/logout" class="btn btn-sm btn-outline">退出</a>
+      <% } else { %>
+        <a href="/login" class="btn btn-sm btn-primary">加入竞猜</a>
+      <% } %>
+      <% if (isAdmin) { %>
+        <a href="/admin" class="btn btn-sm btn-admin">管理</a>
+      <% } %>
+    </div>
+  </div>
+</nav>
+<main class="main-content">

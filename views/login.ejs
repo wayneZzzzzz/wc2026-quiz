@@ -1,0 +1,35 @@
+<%- include('partials/header', {title}) %>
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-icon">⚽</div>
+    <h1 class="auth-title">加入竞猜</h1>
+    <p class="auth-sub">设置你的昵称，开始预测比赛结果！</p>
+
+    <% if (error) { %>
+      <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <form method="POST" action="/login">
+      <div class="form-group">
+        <label class="form-label">你的昵称</label>
+        <input type="text" name="nickname" class="form-input" placeholder="起个响亮的名字..." maxlength="20" autofocus required>
+        <div class="form-hint">最多 20 个字符，昵称即身份，请勿重复使用他人昵称</div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">开始竞猜</button>
+    </form>
+
+    <div class="auth-rules">
+      <h3>📋 竞猜规则</h3>
+      <ul>
+        <li>每场比赛设三个选项，根据亚洲盘口设定</li>
+        <li>每场基础分 <strong>100 点</strong>，猜中者平分猜错者的积分</li>
+        <li>排行榜分两个维度：<strong>积分</strong> 和 <strong>获胜场次</strong></li>
+        <li>投票前看不到他人选择，投票后可查看</li>
+        <li>比赛开始前一天开放投票，开赛即截止</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,70 @@
+<%- include('../partials/header', {title}) %>
+
+<div class="container container-narrow">
+  <a href="/admin" class="back-link">← 返回后台</a>
+  <div class="page-header">
+    <h1>公布比赛结果</h1>
+  </div>
+
+  <div class="card">
+    <div class="mdc-teams" style="margin-bottom:1rem">
+      <div class="mdc-team"><%= match.home_team %></div>
+      <div class="mdc-sep">VS</div>
+      <div class="mdc-team"><%= match.away_team %></div>
+    </div>
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <span class="handicap-tag handicap-tag-lg"><%= match.handicap_desc %></span>
+    </div>
+
+    <!-- 投票统计 -->
+    <% const counts = {a:0,b:0,c:0}; votes.forEach(v => counts[v.choice]++); %>
+    <div class="result-vote-summary">
+      <div class="rvs-item">
+        <span class="vote-opt-letter">A</span> <%= match.option_a %>
+        <strong><%= counts.a %> 人</strong>
+      </div>
+      <div class="rvs-item">
+        <span class="vote-opt-letter">B</span> <%= match.option_b %>
+        <strong><%= counts.b %> 人</strong>
+      </div>
+      <div class="rvs-item">
+        <span class="vote-opt-letter">C</span> <%= match.option_c %>
+        <strong><%= counts.c %> 人</strong>
+      </div>
+      <div class="rvs-total">共 <%= votes.length %> 人参与</div>
+    </div>
+
+    <% if (error) { %>
+      <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <form method="POST" action="/admin/matches/<%= match.id %>/result">
+      <div class="form-group">
+        <label class="form-label">正确答案</label>
+        <div class="result-options">
+          <label class="result-option">
+            <input type="radio" name="result" value="a" required>
+            <div class="result-option-box">A · <%= match.option_a %> (<%= counts.a %> 人猜此)</div>
+          </label>
+          <label class="result-option">
+            <input type="radio" name="result" value="b">
+            <div class="result-option-box">B · <%= match.option_b %> (<%= counts.b %> 人猜此)</div>
+          </label>
+          <label class="result-option">
+            <input type="radio" name="result" value="c">
+            <div class="result-option-box">C · <%= match.option_c %> (<%= counts.c %> 人猜此)</div>
+          </label>
+        </div>
+        <div class="form-hint alert-warn" style="margin-top:.75rem">⚠️ 确认后将自动计算积分，不可撤销</div>
+      </div>
+      <div class="form-actions">
+        <a href="/admin" class="btn btn-outline">取消</a>
+        <button type="submit" class="btn btn-primary" onclick="return confirm('确认公布结果并结算积分？此操作不可撤销！')">
+          公布结果并结算
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

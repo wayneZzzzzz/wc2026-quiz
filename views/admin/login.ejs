@@ -1,0 +1,20 @@
+<%- include('../partials/header', {title}) %>
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-icon">🔑</div>
+    <h1 class="auth-title">管理员登录</h1>
+    <% if (error) { %>
+      <div class="alert alert-error"><%= error %></div>
+    <% } %>
+    <form method="POST" action="/admin/login">
+      <div class="form-group">
+        <label class="form-label">管理员密码</label>
+        <input type="password" name="password" class="form-input" autofocus required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">登录</button>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

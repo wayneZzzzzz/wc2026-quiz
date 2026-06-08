@@ -1,0 +1,113 @@
+<%- include('partials/header', {title}) %>
+
+<div class="container">
+  <div class="page-header">
+    <h1>🏆 排行榜</h1>
+  </div>
+
+  <div class="lb-tabs">
+    <button class="lb-tab active" onclick="switchTab('points')">积分排行</button>
+    <button class="lb-tab" onclick="switchTab('wins')">获胜场次排行</button>
+  </div>
+
+  <!-- 积分排行 -->
+  <div id="tab-points" class="lb-table-wrap">
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>排名</th>
+          <th>昵称</th>
+          <th>总积分</th>
+          <th>获胜场次</th>
+          <th>参与场次</th>
+          <th>胜率</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% const byPoints = [...users].sort((a,b) => b.total_points - a.total_points || b.wins - a.wins); %>
+        <% byPoints.forEach((u, i) => { %>
+          <tr class="<%= i < 3 ? 'top-row' : '' %>">
+            <td class="rank-cell">
+              <% if (i === 0) { %>🥇
+              <% } else if (i === 1) { %>🥈
+              <% } else if (i === 2) { %>🥉
+              <% } else { %><%= i+1 %>
+              <% } %>
+            </td>
+            <td class="name-cell">
+              <%= u.nickname %>
+              <% if (currentUser && u.id === currentUser.id) { %><span class="you-tag">你</span><% } %>
+            </td>
+            <td class="pts-cell <%= u.total_points > 0 ? 'positive' : u.total_points < 0 ? 'negative' : '' %>">
+              <%= u.total_points > 0 ? '+' : '' %><%= u.total_points %>
+            </td>
+            <td><%= u.wins %></td>
+            <td><%= u.total_votes %></td>
+            <td><%= u.total_votes > 0 ? Math.round(u.wins/u.total_votes*100) : 0 %>%</td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% if (users.length === 0) { %>
+      <div class="empty-state">还没有参与者，快来第一个加入！</div>
+    <% } %>
+  </div>
+
+  <!-- 获胜场次排行 -->
+  <div id="tab-wins" class="lb-table-wrap" style="display:none">
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>排名</th>
+          <th>昵称</th>
+          <th>获胜场次</th>
+          <th>总积分</th>
+          <th>参与场次</th>
+          <th>胜率</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% const byWins = [...users].sort((a,b) => b.wins - a.wins || b.total_points - a.total_points); %>
+        <% byWins.forEach((u, i) => { %>
+          <tr class="<%= i < 3 ? 'top-row' : '' %>">
+            <td class="rank-cell">
+              <% if (i === 0) { %>🥇
+              <% } else if (i === 1) { %>🥈
+              <% } else if (i === 2) { %>🥉
+              <% } else { %><%= i+1 %>
+              <% } %>
+            </td>
+            <td class="name-cell">
+              <%= u.nickname %>
+              <% if (currentUser && u.id === currentUser.id) { %><span class="you-tag">你</span><% } %>
+            </td>
+            <td><%= u.wins %></td>
+            <td class="pts-cell <%= u.total_points > 0 ? 'positive' : u.total_points < 0 ? 'negative' : '' %>">
+              <%= u.total_points > 0 ? '+' : '' %><%= u.total_points %>
+            </td>
+            <td><%= u.total_votes %></td>
+            <td><%= u.total_votes > 0 ? Math.round(u.wins/u.total_votes*100) : 0 %>%</td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rules-box">
+    <h3>📋 积分规则</h3>
+    <p>每场比赛基础分 <strong>100 点</strong>。猜中者平分所有猜错者的积分；猜错者扣除 100 分。</p>
+    <p>例：10 人参与，1 人猜中 → 该人获得 <strong>+900 分</strong>，其余 9 人各扣 <strong>100 分</strong>。</p>
+  </div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.getElementById('tab-points').style.display = tab === 'points' ? '' : 'none';
+  document.getElementById('tab-wins').style.display = tab === 'wins' ? '' : 'none';
+  document.querySelectorAll('.lb-tab').forEach((el, i) => {
+    el.classList.toggle('active', (tab === 'points' && i === 0) || (tab === 'wins' && i === 1));
+  });
+}
+</script>
+
+<%- include('partials/footer') %>

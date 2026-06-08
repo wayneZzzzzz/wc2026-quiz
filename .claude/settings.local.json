@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(/usr/local/bin/npm install *)",
+      "Read(//opt/homebrew/**)",
+      "Read(//Users/weizhang/.nvm/**)",
+      "Bash(ls /opt/homebrew/bin/ | grep -i node; ls /usr/local/bin/ | grep -i node; find /opt -name \"node\" -type f 2>/dev/null | head -5)",
+      "Bash(find /usr /opt ~/Library -name \"node\" -type f 2>/dev/null | head -5; ls ~/Downloads 2>/dev/null | head)"
+    ]
+  }
+}

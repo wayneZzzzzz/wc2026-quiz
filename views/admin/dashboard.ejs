@@ -1,0 +1,136 @@
+<%- include('../partials/header', {title}) %>
+
+<div class="container">
+  <div class="page-header">
+    <h1>⚙️ 管理后台</h1>
+    <div>
+      <a href="/admin/matches/new" class="btn btn-primary">+ 添加比赛</a>
+      <a href="/admin/logout" class="btn btn-outline" style="margin-left:.5rem">退出管理</a>
+    </div>
+  </div>
+
+  <!-- 危险操作区 -->
+  <div class="danger-zone">
+    <span>🧹 测试完毕？</span>
+    <form method="POST" action="/admin/reset-all"
+          onsubmit="return confirm('⚠️ 确认清空所有用户、投票和积分记录？\n比赛和盘口数据保留，此操作不可恢复！')">
+      <button class="btn btn-danger btn-sm">清空全部测试数据</button>
+    </form>
+  </div>
+
+  <div class="admin-grid">
+
+    <!-- 比赛管理 -->
+    <section class="section">
+      <h2>📋 比赛管理</h2>
+      <% if (matches.length === 0) { %>
+        <div class="empty-state">还没有比赛，先添加一场吧</div>
+      <% } else { %>
+        <div class="admin-match-list">
+          <% matches.forEach(m => { %>
+            <div class="admin-match-row">
+              <div class="amr-info">
+                <div class="amr-teams"><%= m.home_team %> vs <%= m.away_team %></div>
+                <div class="amr-meta">
+                  <span class="handicap-tag"><%= m.handicap_desc %></span>
+                  <span><%= m.stage %></span>
+                  <span><%= new Date(m.match_time).toLocaleString('zh-CN', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Shanghai'}) %></span>
+                  <span class="status-badge-<%= m.status %>">
+                    <%= m.status === 'upcoming' ? '未开始' : m.status === 'voting' ? '投票中' : m.status === 'closed' ? '已截止' : '已完成' %>
+                  </span>
+                </div>
+                <% if (m.status === 'finished') { %>
+                  <div class="amr-result">
+                    结果: <strong><%= m.result === 'a' ? m.option_a : m.result === 'b' ? m.option_b : m.option_c %></strong>
+                  </div>
+                <% } %>
+              </div>
+              <div class="amr-actions">
+                <% if (m.status !== 'finished') { %>
+                  <a href="/admin/matches/<%= m.id %>/edit" class="btn btn-sm btn-outline">编辑</a>
+                  <% if (m.status === 'upcoming') { %>
+                    <form method="POST" action="/admin/matches/<%= m.id %>/status" style="display:inline">
+                      <input type="hidden" name="status" value="voting">
+                      <button class="btn btn-sm btn-primary">开放投票</button>
+                    </form>
+                  <% } else if (m.status === 'voting') { %>
+                    <form method="POST" action="/admin/matches/<%= m.id %>/status" style="display:inline">
+                      <input type="hidden" name="status" value="closed">
+                      <button class="btn btn-sm btn-warn">截止投票</button>
+                    </form>
+                  <% } %>
+                  <a href="/admin/matches/<%= m.id %>/result" class="btn btn-sm btn-success">公布结果</a>
+                  <form method="POST" action="/admin/matches/<%= m.id %>/delete" style="display:inline" onsubmit="return confirm('确认删除该比赛及所有投票？')">
+                    <button class="btn btn-sm btn-danger">删除</button>
+                  </form>
+                <% } else { %>
+                  <a href="/matches/<%= m.id %>" class="btn btn-sm btn-outline">查看</a>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+
+    <!-- 用户管理 -->
+    <section class="section">
+      <h2>👥 用户管理</h2>
+      <% if (typeof query !== 'undefined' && query.user_error) { %>
+        <div class="alert alert-error"><%= query.user_error %></div>
+      <% } %>
+      <% if (users.length === 0) { %>
+        <div class="empty-state">还没有用户注册</div>
+      <% } else { %>
+        <div class="user-manage-list">
+          <% users.forEach(u => { %>
+            <div class="user-row">
+              <div class="user-row-info">
+                <span class="user-nickname"><%= u.nickname %></span>
+                <span class="user-stats">
+                  <span class="<%= u.total_points > 0 ? 'positive' : u.total_points < 0 ? 'negative' : '' %>">
+                    <%= u.total_points > 0 ? '+' : '' %><%= u.total_points %>分
+                  </span>
+                  · <%= u.wins %>胜 · <%= u.total_votes %>场
+                </span>
+              </div>
+              <div class="user-row-actions">
+                <!-- 改名 -->
+                <form method="POST" action="/admin/users/<%= u.id %>/rename" class="inline-form rename-form" style="display:none" id="rename-<%= u.id %>">
+                  <input type="text" name="nickname" class="form-input form-input-sm" value="<%= u.nickname %>" maxlength="20" required>
+                  <button class="btn btn-sm btn-primary">保存</button>
+                  <button type="button" class="btn btn-sm btn-outline" onclick="cancelRename(<%= u.id %>)">取消</button>
+                </form>
+                <div class="user-btns" id="btns-<%= u.id %>">
+                  <button class="btn btn-sm btn-outline" onclick="showRename(<%= u.id %>)">✏️ 改名</button>
+                  <form method="POST" action="/admin/users/<%= u.id %>/reset-points" style="display:inline"
+                        onsubmit="return confirm('确认重置「<%= u.nickname %>」的积分？')">
+                    <button class="btn btn-sm btn-warn">↺ 重置积分</button>
+                  </form>
+                  <form method="POST" action="/admin/users/<%= u.id %>/delete" style="display:inline"
+                        onsubmit="return confirm('确认删除账号「<%= u.nickname %>」？该操作不可恢复！')">
+                    <button class="btn btn-sm btn-danger">🗑 删除</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+
+  </div>
+</div>
+
+<script>
+function showRename(id) {
+  document.getElementById('rename-' + id).style.display = 'flex';
+  document.getElementById('btns-' + id).style.display = 'none';
+  document.querySelector('#rename-' + id + ' input').focus();
+}
+function cancelRename(id) {
+  document.getElementById('rename-' + id).style.display = 'none';
+  document.getElementById('btns-' + id).style.display = 'flex';
+}
+</script>
+<%- include('../partials/footer') %>

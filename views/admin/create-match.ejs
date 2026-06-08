@@ -1,0 +1,89 @@
+<%- include('../partials/header', {title}) %>
+
+<div class="container container-narrow">
+  <a href="/admin" class="back-link">← 返回后台</a>
+  <div class="page-header">
+    <h1><%= match && match.id ? '编辑比赛' : '添加比赛' %></h1>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+  <% } %>
+
+  <div class="card">
+    <form method="POST" action="<%= match && match.id ? '/admin/matches/' + match.id + '/edit' : '/admin/matches' %>">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">主队（主场）</label>
+          <input type="text" name="home_team" class="form-input" placeholder="例：巴西" value="<%= match ? match.home_team || '' : '' %>" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">客队（客场）</label>
+          <input type="text" name="away_team" class="form-input" placeholder="例：阿根廷" value="<%= match ? match.away_team || '' : '' %>" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">比赛时间</label>
+          <input type="datetime-local" name="match_time" class="form-input" value="<%= match && match.match_time ? match.match_time.replace(' ', 'T').slice(0,16) : '' %>" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">赛事阶段</label>
+          <select name="stage" class="form-input">
+            <% ['小组赛','32强','16强','八强','四强','决赛'].forEach(s => { %>
+              <option value="<%= s %>" <%= match && match.stage === s ? 'selected' : '' %>><%= s %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">盘口说明</label>
+        <input type="text" name="handicap_desc" class="form-input" placeholder="例：巴西让0.5球 / 主队让1球" value="<%= match ? match.handicap_desc || '' : '' %>" required>
+        <div class="form-hint">描述让球方向和数额，将显示在投票页面上</div>
+      </div>
+
+      <div class="handicap-quick">
+        <div class="form-label">快速填充选项</div>
+        <div class="quick-btns">
+          <button type="button" class="btn btn-sm btn-outline" onclick="fillOptions('强队胜','平局','弱队胜')">让 0.25/0.5 球</button>
+          <button type="button" class="btn btn-sm btn-outline" onclick="fillOptions('让球胜','让球平','不败')">让 1 球</button>
+          <button type="button" class="btn btn-sm btn-outline" onclick="fillOptions('让两球胜','让两球平','让两球负')">让 2 球</button>
+          <button type="button" class="btn btn-sm btn-outline" onclick="fillOptions('让三球胜','让三球平','让三球负')">让 3 球</button>
+        </div>
+      </div>
+
+      <div class="form-row form-row-3">
+        <div class="form-group">
+          <label class="form-label">选项 A</label>
+          <input type="text" id="opt_a" name="option_a" class="form-input" placeholder="例：强队胜" value="<%= match ? match.option_a || '' : '' %>" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">选项 B</label>
+          <input type="text" id="opt_b" name="option_b" class="form-input" placeholder="例：平局" value="<%= match ? match.option_b || '' : '' %>" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">选项 C</label>
+          <input type="text" id="opt_c" name="option_c" class="form-input" placeholder="例：弱队胜" value="<%= match ? match.option_c || '' : '' %>" required>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="/admin" class="btn btn-outline">取消</a>
+        <button type="submit" class="btn btn-primary"><%= match && match.id ? '保存修改' : '创建比赛' %></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function fillOptions(a, b, c) {
+  document.getElementById('opt_a').value = a;
+  document.getElementById('opt_b').value = b;
+  document.getElementById('opt_c').value = c;
+}
+</script>
+
+<%- include('../partials/footer') %>

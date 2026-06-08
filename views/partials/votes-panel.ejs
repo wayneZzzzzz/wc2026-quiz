@@ -1,0 +1,52 @@
+<% if (allVotes.length > 0) { %>
+  <div class="votes-section">
+    <h2 class="votes-title">投票情况 (<span id="vote-total"><%= voteCounts.total %></span> 人参与)</h2>
+
+    <% const opts = [
+      {key:'a', label: match.option_a, count: voteCounts.a},
+      {key:'b', label: match.option_b, count: voteCounts.b},
+      {key:'c', label: match.option_c, count: voteCounts.c}
+    ]; %>
+
+    <div class="vote-stats" id="vote-stats">
+      <% opts.forEach(opt => { %>
+        <div class="vote-stat-row <%= effectiveStatus==='finished' && match.result===opt.key ? 'correct-row' : '' %>" data-opt="<%= opt.key %>">
+          <div class="vsr-label">
+            <span class="vote-opt-letter vote-opt-letter-sm"><%= opt.key.toUpperCase() %></span>
+            <%= opt.label %>
+            <% if (effectiveStatus==='finished' && match.result===opt.key) { %>
+              <span class="correct-badge">✓ 正确</span>
+            <% } %>
+          </div>
+          <div class="vsr-bar-wrap">
+            <div class="vsr-bar" style="width:<%= voteCounts.total>0 ? Math.round(opt.count/voteCounts.total*100) : 0 %>%" data-count="<%= opt.count %>"></div>
+          </div>
+          <div class="vsr-count"><span class="cnt"><%= opt.count %></span> 人 (<span class="pct"><%= voteCounts.total>0 ? Math.round(opt.count/voteCounts.total*100) : 0 %></span>%)</div>
+        </div>
+      <% }) %>
+    </div>
+
+    <div class="voter-list" id="voter-list">
+      <% const groups = {a:[],b:[],c:[]}; allVotes.forEach(v => groups[v.choice].push(v)); %>
+      <% opts.forEach(opt => { %>
+        <% if (groups[opt.key].length > 0) { %>
+          <div class="voter-group" data-opt="<%= opt.key %>">
+            <div class="voter-group-header <%= effectiveStatus==='finished' && match.result===opt.key ? 'correct-group' : '' %>">
+              <span class="vote-opt-letter vote-opt-letter-sm"><%= opt.key.toUpperCase() %></span>
+              <%= opt.label %> · <span class="group-cnt"><%= groups[opt.key].length %></span> 人
+            </div>
+            <div class="voter-chips">
+              <% groups[opt.key].forEach(v => { %>
+                <span class="voter-chip <%= effectiveStatus==='finished' ? (match.result===opt.key ? 'chip-win' : 'chip-lose') : '' %>">
+                  <%= v.nickname %>
+                </span>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
+      <% }) %>
+    </div>
+  </div>
+<% } else if (effectiveStatus !== 'upcoming' && effectiveStatus !== 'voting') { %>
+  <div class="info-box" style="margin-top:1.5rem"><p>本场暂无人参与投票</p></div>
+<% } %>

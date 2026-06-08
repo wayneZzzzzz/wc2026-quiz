@@ -1,0 +1,49 @@
+<%- include('partials/header', {title}) %>
+
+<div class="container">
+  <div class="page-header">
+    <h1>⚽ 赛程总览</h1>
+  </div>
+
+  <div class="filter-tabs">
+    <a href="/matches" class="filter-tab <%= !stage ? 'active' : '' %>">全部</a>
+    <% ['小组赛','32强','16强','八强','四强','决赛'].forEach(s => { %>
+      <a href="/matches?stage=<%= s %>" class="filter-tab <%= stage===s ? 'active' : '' %>"><%= s %></a>
+    <% }) %>
+  </div>
+
+  <% if (matches.length === 0) { %>
+    <div class="empty-state" style="margin-top:3rem">该阶段暂无比赛</div>
+  <% } else { %>
+    <div class="matches-grid">
+      <% matches.forEach(m => { %>
+        <a href="/matches/<%= m.id %>" class="match-card-full status-<%= m.effectiveStatus %>">
+          <div class="mcf-top">
+            <span class="mcf-stage"><%= m.stage %></span>
+            <span class="mcf-status status-badge-<%= m.effectiveStatus %>">
+              <% if(m.effectiveStatus==='upcoming'){%>未开放<%}else if(m.effectiveStatus==='voting'){%>🔴 投票中<%}else if(m.effectiveStatus==='closed'){%>待公布<%}else{%>✅ 已结束<%}%>
+            </span>
+          </div>
+          <div class="mcf-teams">
+            <div class="mcf-team home"><%= m.home_team %> <%= flag(m.home_team) %></div>
+            <div class="mcf-sep">VS</div>
+            <div class="mcf-team away"><%= flag(m.away_team) %> <%= m.away_team %></div>
+          </div>
+          <div class="mcf-bottom">
+            <span class="handicap-tag"><%= m.handicap_desc %></span>
+          </div>
+          <div class="match-times">
+            <span class="time-item">🇨🇳 <%= fmtBJ(m.match_time) %></span>
+            <span class="time-sep">·</span>
+            <span class="time-item time-et">🇺🇸 美东 <%= fmtET(m.match_time) %></span>
+          </div>
+          <% if (m.effectiveStatus === 'finished') { %>
+            <div class="mcf-result">结果：<strong><%= m.result==='a'?m.option_a:m.result==='b'?m.option_b:m.option_c %></strong></div>
+          <% } %>
+        </a>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('partials/footer') %>
