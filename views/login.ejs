@@ -4,19 +4,36 @@
   <div class="auth-card">
     <div class="auth-icon">⚽</div>
     <h1 class="auth-title">加入竞猜</h1>
-    <p class="auth-sub">设置你的昵称，开始预测比赛结果！</p>
+    <p class="auth-sub">输入昵称即可加入，无需密码</p>
 
     <% if (error) { %>
       <div class="alert alert-error"><%= error %></div>
     <% } %>
 
+    <!-- 已有用户快速选择 -->
+    <% if (existingUsers.length > 0) { %>
+      <div class="quick-login">
+        <div class="ql-label">已有成员，点击直接登入：</div>
+        <div class="ql-chips">
+          <% existingUsers.forEach(u => { %>
+            <button type="button" class="ql-chip" onclick="fillNickname('<%= u.nickname.replace(/'/g, "\\'") %>')">
+              <%= u.nickname %>
+            </button>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+
     <form method="POST" action="/login">
       <div class="form-group">
         <label class="form-label">你的昵称</label>
-        <input type="text" name="nickname" class="form-input" placeholder="起个响亮的名字..." maxlength="20" autofocus required>
-        <div class="form-hint">最多 20 个字符，昵称即身份，请勿重复使用他人昵称</div>
+        <input type="text" name="nickname" id="nickname-input" class="form-input"
+          placeholder="输入或点击上方选择..." maxlength="20" autofocus required>
+        <div class="form-hint">
+          ⚠️ 昵称区分大小写，再次登入请保持与上次完全一致（如：<strong>Wayne</strong> 和 <strong>wayne</strong> 是不同账号）
+        </div>
       </div>
-      <button type="submit" class="btn btn-primary btn-block">开始竞猜</button>
+      <button type="submit" class="btn btn-primary btn-block">进入竞猜</button>
     </form>
 
     <div class="auth-rules">
@@ -26,10 +43,17 @@
         <li>每场基础分 <strong>100 点</strong>，猜中者平分猜错者的积分</li>
         <li>排行榜分两个维度：<strong>积分</strong> 和 <strong>获胜场次</strong></li>
         <li>投票前看不到他人选择，投票后可查看</li>
-        <li>比赛开始前一天开放投票，开赛即截止</li>
+        <li>比赛开始<strong>提前两天</strong>开放投票，开赛即截止</li>
       </ul>
     </div>
   </div>
 </div>
+
+<script>
+function fillNickname(name) {
+  document.getElementById('nickname-input').value = name;
+  document.getElementById('nickname-input').focus();
+}
+</script>
 
 <%- include('partials/footer') %>

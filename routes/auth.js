@@ -19,7 +19,8 @@ module.exports = function(db) {
 
   router.get('/login', (req, res) => {
     if (req.session.user) return res.redirect('/');
-    res.render('login', { title: '加入竞猜', error: null });
+    const existingUsers = db.prepare('SELECT nickname FROM users ORDER BY created_at ASC').all();
+    res.render('login', { title: '加入竞猜', error: null, existingUsers });
   });
 
   router.post('/login', (req, res) => {
