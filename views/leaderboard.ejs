@@ -20,7 +20,7 @@
           <th>总积分</th>
           <th>获胜场次</th>
           <th>参与场次</th>
-          <th>胜率</th>
+          <th class="wr-col">胜率</th>
         </tr>
       </thead>
       <tbody>
@@ -43,7 +43,7 @@
             </td>
             <td><%= u.wins %></td>
             <td><%= u.total_votes %></td>
-            <td><%= u.total_votes > 0 ? Math.round(u.wins/u.total_votes*100) : 0 %>%</td>
+            <td class="wr-cell"><%= u.total_votes > 0 ? (u.wins/u.total_votes*100).toFixed(1) : '0.0' %>%</td>
           </tr>
         <% }) %>
       </tbody>
@@ -63,7 +63,7 @@
           <th>获胜场次</th>
           <th>总积分</th>
           <th>参与场次</th>
-          <th>胜率</th>
+          <th class="wr-col">胜率</th>
         </tr>
       </thead>
       <tbody>

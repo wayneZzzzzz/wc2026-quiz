@@ -93,6 +93,7 @@
                     <%= u.total_points > 0 ? '+' : '' %><%= u.total_points %>分
                   </span>
                   · <%= u.wins %>胜 · <%= u.total_votes %>场
+                  · <strong><%= u.total_votes > 0 ? (u.wins/u.total_votes*100).toFixed(1) : '0.0' %>%</strong>胜率
                 </span>
               </div>
               <div class="user-row-actions">

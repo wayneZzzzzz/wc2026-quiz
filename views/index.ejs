@@ -74,6 +74,7 @@
                 <%= u.total_points > 0 ? '+' : '' %><%= u.total_points %>
               </span>
               <span class="lb-wins"><%= u.wins %>胜</span>
+              <span class="lb-wr"><%= u.total_votes > 0 ? (u.wins/u.total_votes*100).toFixed(1) : '0.0' %>%</span>
             </div>
           <% }) %>
         </div>
