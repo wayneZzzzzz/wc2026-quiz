@@ -36,8 +36,8 @@ module.exports = function(db) {
       user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
     }
     req.session.user = { id: user.id, nickname: user.nickname };
-    // 仅首次注册跳到冠军选择页，老用户直接进首页
-    if (isNew) {
+    // 未选择冠军（包括跳过的用户）→ 每次登录提醒；已选择 → 直接进首页
+    if (!user.predicted_champion) {
       return res.redirect('/pick-champion');
     }
     res.redirect('/');
