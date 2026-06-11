@@ -59,33 +59,49 @@ async function updateScores() {
     const homeZh = toZh(event.home_team);
     const awayZh = toZh(event.away_team);
 
-    // 找到 DB 中还未结算的比赛（状态 voting 或 closed）
-    const match = db.prepare(
+    // 找到 DB 中还未结算的比赛（状态 voting/closed/upcoming，正反顺序都尝试）
+    let match = db.prepare(
       `SELECT * FROM matches WHERE home_team=? AND away_team=? AND status IN ('voting','closed','upcoming')`
     ).get(homeZh, awayZh);
-    if (!match) continue;
+    let swapped = false;
+    if (!match) {
+      match = db.prepare(
+        `SELECT * FROM matches WHERE home_team=? AND away_team=? AND status IN ('voting','closed','upcoming')`
+      ).get(awayZh, homeZh);
+      swapped = true;
+    }
+    if (!match) {
+      console.log(`[赛果] 未匹配到比赛: ${homeZh} vs ${awayZh} (${event.home_team} vs ${event.away_team})`);
+      continue;
+    }
 
-    // 解析比分
-    const homeScore = parseInt(event.scores.find(s => s.name === event.home_team)?.score ?? -1);
-    const awayScore = parseInt(event.scores.find(s => s.name === event.away_team)?.score ?? -1);
-    if (isNaN(homeScore) || isNaN(awayScore) || homeScore < 0) continue;
+    // 解析比分（API 视角）
+    const apiHomeScore = parseInt(event.scores.find(s => s.name === event.home_team)?.score ?? -1);
+    const apiAwayScore = parseInt(event.scores.find(s => s.name === event.away_team)?.score ?? -1);
+    if (isNaN(apiHomeScore) || isNaN(apiAwayScore) || apiHomeScore < 0) continue;
+
+    // 转换为 DB 中 home/away 顺序的比分
+    const dbHomeScore = swapped ? apiAwayScore : apiHomeScore;
+    const dbAwayScore = swapped ? apiHomeScore : apiAwayScore;
+    const dbHomeZh = match.home_team;
+    const dbAwayZh = match.away_team;
 
     // 判断正确选项
-    const result = determineResult(homeScore, awayScore, match.handicap_desc, homeZh, awayZh);
+    const result = determineResult(dbHomeScore, dbAwayScore, match.handicap_desc, dbHomeZh, dbAwayZh);
     if (!result) {
-      console.log(`[赛果] ⚠️ 无法判断结果: ${homeZh} vs ${awayZh} (${homeScore}-${awayScore})，盘口: ${match.handicap_desc}`);
+      console.log(`[赛果] ⚠️ 无法判断结果: ${dbHomeZh} vs ${dbAwayZh} (${dbHomeScore}-${dbAwayScore})，盘口: ${match.handicap_desc}`);
       // 仍然更新比分，等管理员手动选结果
       db.prepare('UPDATE matches SET home_score=?,away_score=?,status=? WHERE id=?')
-        .run(homeScore, awayScore, 'closed', match.id);
+        .run(dbHomeScore, dbAwayScore, 'closed', match.id);
       continue;
     }
 
     // 写入结果并结算
     try {
       db.prepare('UPDATE matches SET result=?,status=?,home_score=?,away_score=? WHERE id=?')
-        .run(result, 'finished', homeScore, awayScore, match.id);
+        .run(result, 'finished', dbHomeScore, dbAwayScore, match.id);
       doSettle(db, match.id);
-      console.log(`[赛果] ✅ 自动结算: ${homeZh} ${homeScore}-${awayScore} ${awayZh}，正确答案: ${result.toUpperCase()}`);
+      console.log(`[赛果] ✅ 自动结算: ${dbHomeZh} ${dbHomeScore}-${dbAwayScore} ${dbAwayZh}，正确答案: ${result.toUpperCase()}`);
       updated++;
     } catch (e) {
       console.error(`[赛果] 结算失败: ${homeZh} vs ${awayZh}`, e.message);

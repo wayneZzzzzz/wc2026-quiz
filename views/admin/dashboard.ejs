@@ -5,9 +5,20 @@
     <h1>⚙️ 管理后台</h1>
     <div>
       <a href="/admin/matches/new" class="btn btn-primary">+ 添加比赛</a>
+      <form method="POST" action="/admin/check-scores" style="display:inline">
+        <button type="submit" class="btn btn-outline" style="margin-left:.5rem">🔄 立即检查赛果</button>
+      </form>
       <a href="/admin/logout" class="btn btn-outline" style="margin-left:.5rem">退出管理</a>
     </div>
   </div>
+
+  <% if (typeof query !== 'undefined' && query.scoresChecked !== undefined) { %>
+    <% if (query.scoresChecked === 'err') { %>
+      <div class="alert alert-error">赛果检查失败，请查看服务器日志</div>
+    <% } else { %>
+      <div class="alert alert-success">赛果检查完成，本次自动结算 <%= query.scoresChecked %> 场（详情见服务器日志）</div>
+    <% } %>
+  <% } %>
 
   <!-- 危险操作区 -->
   <div class="danger-zone">

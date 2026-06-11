@@ -36,6 +36,18 @@ module.exports = function(db) {
     res.render('admin/dashboard', { title: '管理后台', matches, users, query: req.query, eliminated });
   });
 
+  // ===== 手动触发赛果抓取与结算（用于排查/补漏）=====
+  router.post('/check-scores', requireAdmin, async (req, res) => {
+    try {
+      const updateScores = require('../scripts/update-scores');
+      const updated = await updateScores();
+      res.redirect(`/admin?scoresChecked=${updated ?? 0}`);
+    } catch (e) {
+      console.error('[手动赛果检查]', e.message);
+      res.redirect('/admin?scoresChecked=err');
+    }
+  });
+
   router.get('/matches/new', requireAdmin, (req, res) => {
     res.render('admin/create-match', { title: '添加比赛', match: null, error: null });
   });
