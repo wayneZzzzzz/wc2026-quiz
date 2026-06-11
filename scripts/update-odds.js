@@ -129,6 +129,14 @@ async function updateOdds() {
     ).get(homeZh, awayZh);
     if (!match) { skipped++; continue; }
 
+    // 已有人投票则锁定盘口，避免选项变化导致已投票内容含义改变
+    const voteCount = db.prepare('SELECT COUNT(*) AS c FROM votes WHERE match_id=?').get(match.id);
+    if (voteCount.c > 0) {
+      console.log(`  ⏸ ${homeZh} vs ${awayZh} 已有投票，盘口锁定，跳过更新`);
+      skipped++;
+      continue;
+    }
+
     // 找 spreads 盘口
     const bm = event.bookmakers?.find(b => b.markets?.some(m => m.key === 'spreads'));
     if (!bm) { skipped++; continue; }
