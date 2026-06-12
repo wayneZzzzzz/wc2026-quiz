@@ -27,8 +27,12 @@
         <div class="match-list">
           <% upcomingMatches.forEach(m => { %>
             <a href="/matches/<%= m.id %>" class="match-card-sm">
-              <% if (currentUser && m.effectiveStatus === 'voting' && m.userVoted) { %>
-                <span class="voted-ribbon">已投票</span>
+              <% if (currentUser && m.effectiveStatus === 'voting') { %>
+                <% if (m.userVoted) { %>
+                  <span class="voted-ribbon">已投票</span>
+                <% } else { %>
+                  <span class="pending-ribbon">待投票</span>
+                <% } %>
               <% } %>
               <div class="match-card-stage"><%= m.stage %></div>
               <div class="match-card-teams">
@@ -39,9 +43,7 @@
               <div class="match-card-meta">
                 <span class="handicap-tag"><%= m.handicap_desc %></span>
                 <% if (m.effectiveStatus === 'voting') { %>
-                  <% if (currentUser && !m.userVoted) { %>
-                    <span class="badge-voting-sm">🔴 待投票</span>
-                  <% } else if (!currentUser) { %>
+                  <% if (!currentUser) { %>
                     <span class="badge-voting-sm">🔴 投票中</span>
                   <% } %>
                 <% } else { %>

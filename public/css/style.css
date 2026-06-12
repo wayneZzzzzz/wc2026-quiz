@@ -111,6 +111,11 @@ a { color: inherit; text-decoration: none; }
   font-size: .68rem; font-weight: 700; padding: .2rem .6rem .2rem .8rem;
   border-radius: 0 0 0 8px; letter-spacing: .02em;
 }
+.pending-ribbon {
+  position: absolute; top: 0; right: 0; background: #dc2626; color: #fff;
+  font-size: .68rem; font-weight: 700; padding: .2rem .6rem .2rem .8rem;
+  border-radius: 0 0 0 8px; letter-spacing: .02em;
+}
 .match-card-sm:hover { border-color: #059669; background: white; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,.08); }
 .match-card-stage { font-size: .72rem; color: #6b7280; text-transform: uppercase; letter-spacing: .5px; margin-bottom: .3rem; }
 .match-card-teams { display: flex; align-items: center; gap: .5rem; font-weight: 600; font-size: .95rem; margin-bottom: .4rem; }
