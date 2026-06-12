@@ -36,7 +36,15 @@
               <div class="match-card-meta">
                 <span class="handicap-tag"><%= m.handicap_desc %></span>
                 <% if (m.effectiveStatus === 'voting') { %>
-                  <span class="badge-voting-sm">🔴 投票中</span>
+                  <% if (currentUser) { %>
+                    <% if (m.userVoted) { %>
+                      <span class="badge-voted">✅ 已投票</span>
+                    <% } else { %>
+                      <span class="badge-voting-sm">🔴 待投票</span>
+                    <% } %>
+                  <% } else { %>
+                    <span class="badge-voting-sm">🔴 投票中</span>
+                  <% } %>
                 <% } else { %>
                   <span class="match-time">🕐 <%= fmtBJ(m.match_time) %> 北京</span>
                 <% } %>

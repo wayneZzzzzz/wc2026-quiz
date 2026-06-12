@@ -5,9 +5,14 @@ module.exports = function(db) {
 
   router.get('/', (req, res) => {
     const { getEffectiveStatus } = require('./matches');
+    let votedMatchIds = new Set();
+    if (req.session.user) {
+      const voted = db.prepare('SELECT match_id FROM votes WHERE user_id=?').all(req.session.user.id);
+      votedMatchIds = new Set(voted.map(v => v.match_id));
+    }
     const upcomingMatches = db.prepare(
       `SELECT * FROM matches WHERE status != 'finished' ORDER BY match_time ASC LIMIT 6`
-    ).all().map(m => ({ ...m, effectiveStatus: getEffectiveStatus(m) }));
+    ).all().map(m => ({ ...m, effectiveStatus: getEffectiveStatus(m), userVoted: votedMatchIds.has(m.id) }));
     const finishedMatches = db.prepare(
       `SELECT * FROM matches WHERE status = 'finished' ORDER BY match_time DESC LIMIT 2`
     ).all();
