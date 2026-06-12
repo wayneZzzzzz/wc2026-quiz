@@ -103,8 +103,13 @@ a { color: inherit; text-decoration: none; }
 /* ===== Match Cards (small, home) ===== */
 .match-list { display: flex; flex-direction: column; gap: .75rem; }
 .match-card-sm {
-  display: block; border: 1px solid #e5e7eb; border-radius: 10px; padding: .9rem 1rem;
-  transition: all .15s; background: #fafafa;
+  display: block; position: relative; border: 1px solid #e5e7eb; border-radius: 10px; padding: .9rem 1rem;
+  transition: all .15s; background: #fafafa; overflow: hidden;
+}
+.voted-ribbon {
+  position: absolute; top: 0; right: 0; background: #059669; color: #fff;
+  font-size: .68rem; font-weight: 700; padding: .2rem .6rem .2rem .8rem;
+  border-radius: 0 0 0 8px; letter-spacing: .02em;
 }
 .match-card-sm:hover { border-color: #059669; background: white; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,.08); }
 .match-card-stage { font-size: .72rem; color: #6b7280; text-transform: uppercase; letter-spacing: .5px; margin-bottom: .3rem; }
