@@ -64,7 +64,15 @@
                     <span class="fix-time">🇨🇳 <%= fmtBJ(m.match_time) %></span>
                   <% } %>
                   <% if (m.effectiveStatus === 'voting') { %>
-                    <span class="badge-voting">🔴 投票中</span>
+                    <% if (currentUser) { %>
+                      <% if (m.userVoted) { %>
+                        <span class="badge-voted">✅ 已投票</span>
+                      <% } else { %>
+                        <span class="badge-voting">🔴 待投票</span>
+                      <% } %>
+                    <% } else { %>
+                      <span class="badge-voting">🔴 投票中</span>
+                    <% } %>
                   <% } %>
                 </div>
               </a>
@@ -109,7 +117,12 @@
                     <div class="bm-footer">
                       <span class="fix-handicap"><%= m.handicap_desc %></span>
                       <span class="fix-time">🇨🇳 <%= fmtBJ(m.match_time) %></span>
-                      <% if (m.effectiveStatus==='voting') { %><span class="badge-voting">🔴 投票中</span><% } %>
+                      <% if (m.effectiveStatus==='voting') { %>
+                        <% if (currentUser) { %>
+                          <% if (m.userVoted) { %><span class="badge-voted">✅ 已投票</span>
+                          <% } else { %><span class="badge-voting">🔴 待投票</span><% } %>
+                        <% } else { %><span class="badge-voting">🔴 投票中</span><% } %>
+                      <% } %>
                     </div>
                   <% } else { %>
                     <div class="bm-footer">

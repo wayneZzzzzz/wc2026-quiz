@@ -519,6 +519,7 @@ a { color: inherit; text-decoration: none; }
 .fix-time { color:#9ca3af; }
 .fix-result-label { color:#9ca3af; font-style:italic; }
 .badge-voting { background:#fef2f2; color:#dc2626; padding:.1rem .4rem; border-radius:5px; font-weight:700; }
+.badge-voted { background:#f0fdf4; color:#16a34a; padding:.1rem .4rem; border-radius:5px; font-weight:700; }
 
 /* ===== Knockout Bracket ===== */
 .bracket-wrapper { display:flex; gap:1.25rem; overflow-x:auto; padding-bottom:1rem; align-items:flex-start; }

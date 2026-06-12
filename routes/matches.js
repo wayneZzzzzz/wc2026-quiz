@@ -54,6 +54,14 @@ module.exports = function(db) {
     const allMatches = db.prepare('SELECT * FROM matches ORDER BY match_time ASC').all();
     allMatches.forEach(m => m.effectiveStatus = getEffectiveStatus(m));
 
+    // 当前用户已投票的比赛 id 集合，用于在赛程页标注"已投票/待投票"
+    let votedMatchIds = new Set();
+    if (req.session.user) {
+      const voted = db.prepare('SELECT match_id FROM votes WHERE user_id=?').all(req.session.user.id);
+      votedMatchIds = new Set(voted.map(v => v.match_id));
+    }
+    allMatches.forEach(m => m.userVoted = votedMatchIds.has(m.id));
+
     // 小组赛：按组分
     const groupMatches = allMatches.filter(m => m.stage && m.stage.startsWith('小组赛'));
     const groupMap = {}; // { 'A组': [...], 'B组': [...] }
