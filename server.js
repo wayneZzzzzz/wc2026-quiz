@@ -129,7 +129,7 @@ initSqlJs().then(async SQL => {
     setInterval(updateScores, 60 * 60 * 1000);
 
     // 比赛结束后尽快抓取赛果：预估比赛耗时135分钟后开始检查，
-    // 1分钟后首次尝试，若该场仍未结算则每2分钟重试，最多重试30次（1小时）
+    // 1分钟后首次尝试，若该场仍未结算则每2分钟重试，最多重试5次（约10分钟）
     function scheduleMatchScoreCheck(match) {
       const matchTime = new Date(match.match_time.replace(' ', 'T') + ':00Z');
       const estimatedEnd = matchTime.getTime() + 135 * 60 * 1000; // 预估135分钟结束
@@ -145,7 +145,7 @@ initSqlJs().then(async SQL => {
           }
         }, Math.max(waitMs, 0));
       };
-      attempt(delay, 30);
+      attempt(delay, 5);
     }
 
     const pendingMatches = db.prepare(
