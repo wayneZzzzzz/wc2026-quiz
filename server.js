@@ -124,9 +124,34 @@ initSqlJs().then(async SQL => {
     await importMatches();
     await updateOdds();
     await updateScores();
-    // 每3小时更新盘口；每小时检查赛果并自动结算
+    // 每3小时更新盘口；每小时检查赛果并自动结算（兜底）
     setInterval(updateOdds,   ODDS_UPDATE_INTERVAL);
     setInterval(updateScores, 60 * 60 * 1000);
+
+    // 比赛结束后尽快抓取赛果：预估比赛耗时135分钟后开始检查，
+    // 1分钟后首次尝试，若该场仍未结算则每2分钟重试，最多重试30次（1小时）
+    function scheduleMatchScoreCheck(match) {
+      const matchTime = new Date(match.match_time.replace(' ', 'T') + ':00Z');
+      const estimatedEnd = matchTime.getTime() + 135 * 60 * 1000; // 预估135分钟结束
+      const firstCheckAt = estimatedEnd + 1 * 60 * 1000; // 结束后1分钟
+      const delay = firstCheckAt - Date.now();
+
+      const attempt = (waitMs, retriesLeft) => {
+        setTimeout(async () => {
+          await updateScores();
+          const m = db.prepare('SELECT status FROM matches WHERE id=?').get(match.id);
+          if (m && m.status !== 'finished' && retriesLeft > 0) {
+            attempt(2 * 60 * 1000, retriesLeft - 1);
+          }
+        }, Math.max(waitMs, 0));
+      };
+      attempt(delay, 30);
+    }
+
+    const pendingMatches = db.prepare(
+      `SELECT id, match_time FROM matches WHERE status != 'finished'`
+    ).all();
+    pendingMatches.forEach(scheduleMatchScoreCheck);
 
     // Render 免费版防休眠：每 14 分钟 ping 自己
     if (process.env.RENDER_EXTERNAL_URL) {
