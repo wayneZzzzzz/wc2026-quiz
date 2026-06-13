@@ -61,7 +61,11 @@
       "Bash(curl -s \"https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/scores/?apiKey=4f41f49d9af2f7aa3f46183ec571d452&daysFrom=3\")",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(env)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(e['home_team'],e['away_team'],e['completed'],e.get\\('scores'\\)\\) for e in d]\")",
+      "Bash(ODDS_API_KEY=4f41f49d9af2f7aa3f46183ec571d452 node -e ' *)",
+      "Bash(git commit *)"
     ]
   }
 }
