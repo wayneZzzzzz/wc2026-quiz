@@ -5,6 +5,9 @@
     <h1>⚙️ 管理后台</h1>
     <div>
       <a href="/admin/matches/new" class="btn btn-primary">+ 添加比赛</a>
+      <form method="POST" action="/admin/refresh-odds" style="display:inline">
+        <button type="submit" class="btn btn-outline" style="margin-left:.5rem">📡 刷新盘口</button>
+      </form>
       <form method="POST" action="/admin/check-scores" style="display:inline">
         <button type="submit" class="btn btn-outline" style="margin-left:.5rem">🔄 立即检查赛果</button>
       </form>
@@ -12,6 +15,13 @@
     </div>
   </div>
 
+  <% if (typeof query !== 'undefined' && query.oddsRefreshed !== undefined) { %>
+    <% if (query.oddsRefreshed === 'err') { %>
+      <div class="alert alert-error">盘口刷新失败，请查看服务器日志</div>
+    <% } else { %>
+      <div class="alert alert-success">盘口刷新完成，本次更新 <%= query.oddsRefreshed %> 场（已有投票的比赛已跳过）</div>
+    <% } %>
+  <% } %>
   <% if (typeof query !== 'undefined' && query.scoresChecked !== undefined) { %>
     <% if (query.scoresChecked === 'err') { %>
       <div class="alert alert-error">赛果检查失败，请查看服务器日志</div>

@@ -36,6 +36,18 @@ module.exports = function(db) {
     res.render('admin/dashboard', { title: '管理后台', matches, users, query: req.query, eliminated });
   });
 
+  // ===== 手动刷新无投票比赛的盘口数据 =====
+  router.post('/refresh-odds', requireAdmin, async (req, res) => {
+    try {
+      const updateOdds = require('../scripts/update-odds');
+      const r = await updateOdds();
+      res.redirect(`/admin?oddsRefreshed=${r.updated}`);
+    } catch (e) {
+      console.error('[手动盘口刷新]', e.message);
+      res.redirect('/admin?oddsRefreshed=err');
+    }
+  });
+
   // ===== 手动触发赛果抓取与结算（用于排查/补漏）=====
   router.post('/check-scores', requireAdmin, async (req, res) => {
     try {
