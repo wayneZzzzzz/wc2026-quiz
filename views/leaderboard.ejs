@@ -130,6 +130,15 @@
     <div id="trend-empty" class="empty-state" style="display:none;padding:3rem">暂无积分记录</div>
   </div>
 
+  <!-- 积分走势（嵌入在积分排行 tab 下方，共用数据） -->
+  <div id="points-trend-wrap" style="margin-top:2rem;display:block">
+    <div class="section-header" style="margin-bottom:.75rem"><h3 style="margin:0;font-size:1rem;color:#374151">📈 积分走势</h3></div>
+    <div style="position:relative;height:320px">
+      <canvas id="trendChartInline"></canvas>
+    </div>
+    <div id="points-trend-empty" class="empty-state" style="display:none;padding:2rem">暂无积分记录</div>
+  </div>
+
   <div class="rules-box">
     <h3>📋 积分规则</h3>
     <p>每场比赛基础分 <strong>100 点</strong>。猜中者平分所有猜错者的积分；猜错者扣除 100 分。</p>
@@ -140,79 +149,104 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
 const TABS = ['points','wins','champion','trend'];
-let chartLoaded = false;
+let chartData = null;
+let trendChartRendered = false;
+
+// 估算最长人名宽度（px），为右侧留出足够空间
+function labelPadding(datasets) {
+  const longest = datasets.reduce((m, d) => d.label.length > m ? d.label.length : m, 0);
+  return Math.max(longest * 8 + 10, 40);
+}
+
+function buildChartOptions(rightPad) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { right: rightPad } },
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: c => `${c.dataset.label}: ${c.parsed.y > 0 ? '+' : ''}${c.parsed.y}`
+        }
+      }
+    },
+    scales: {
+      x: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 12 } } },
+      y: {
+        grid: { color: '#f0f0f0' },
+        ticks: { font: { size: 12 }, callback: v => (v > 0 ? '+' : '') + v }
+      }
+    },
+    animation: {
+      onComplete() {
+        const chart = this;
+        const ctx2 = chart.ctx;
+        ctx2.save();
+        ctx2.font = 'bold 12px sans-serif';
+        ctx2.textAlign = 'left';
+        chart.data.datasets.forEach((ds, i) => {
+          const meta = chart.getDatasetMeta(i);
+          if (!meta.visible || meta.data.length === 0) return;
+          const last = meta.data[meta.data.length - 1];
+          ctx2.fillStyle = ds.borderColor;
+          ctx2.fillText(ds.label, last.x + 6, last.y + 4);
+        });
+        ctx2.restore();
+      }
+    }
+  };
+}
+
+function renderChart(canvasId, data) {
+  const pad = labelPadding(data.datasets);
+  new Chart(document.getElementById(canvasId).getContext('2d'), {
+    type: 'line', data, options: buildChartOptions(pad)
+  });
+}
 
 function switchTab(tab) {
   TABS.forEach(t => {
     document.getElementById('tab-'+t).style.display = t === tab ? '' : 'none';
   });
+  // 积分排行 tab 下方的走势图随 tab 一起显示/隐藏
+  document.getElementById('points-trend-wrap').style.display = tab === 'points' ? '' : 'none';
   document.querySelectorAll('.lb-tab').forEach((el, i) => {
     el.classList.toggle('active', i === TABS.indexOf(tab));
   });
-  if (tab === 'trend' && !chartLoaded) loadTrendChart();
-}
-
-function loadTrendChart() {
-  fetch('/leaderboard/chart-data')
-    .then(r => r.json())
-    .then(data => {
-      chartLoaded = true;
-      if (!data.datasets || data.datasets.length === 0) {
+  if (tab === 'trend' && !trendChartRendered) {
+    const doRender = () => {
+      trendChartRendered = true;
+      if (!chartData.datasets || chartData.datasets.length === 0) {
         document.getElementById('trendChart').style.display = 'none';
         document.getElementById('trend-empty').style.display = '';
-        return;
+      } else {
+        renderChart('trendChart', chartData);
       }
-      const ctx = document.getElementById('trendChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: data,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y > 0 ? '+' : ''}${ctx.parsed.y}`
-              }
-            }
-          },
-          scales: {
-            x: {
-              grid: { color: '#f0f0f0' },
-              ticks: { font: { size: 12 } }
-            },
-            y: {
-              grid: { color: '#f0f0f0' },
-              ticks: {
-                font: { size: 12 },
-                callback: v => (v > 0 ? '+' : '') + v
-              }
-            }
-          },
-          // 在折线末端显示人名标签
-          animation: {
-            onComplete() {
-              const chart = this;
-              const ctx2 = chart.ctx;
-              ctx2.save();
-              ctx2.font = 'bold 12px sans-serif';
-              ctx2.textAlign = 'left';
-              chart.data.datasets.forEach((ds, i) => {
-                const meta = chart.getDatasetMeta(i);
-                if (!meta.visible || meta.data.length === 0) return;
-                const last = meta.data[meta.data.length - 1];
-                ctx2.fillStyle = ds.borderColor;
-                ctx2.fillText(ds.label, last.x + 6, last.y + 4);
-              });
-              ctx2.restore();
-            }
-          }
-        }
-      });
-    });
+    };
+    chartData ? doRender() : loadChartData(doRender);
+  }
 }
+
+function loadChartData(cb) {
+  fetch('/leaderboard/chart-data').then(r => r.json()).then(data => {
+    chartData = data;
+    cb && cb();
+  });
+}
+
+// 页面加载时直接渲染积分排行下方的内联走势图
+loadChartData(() => {
+  if (!chartData.datasets || chartData.datasets.length === 0) {
+    document.getElementById('points-trend-empty').style.display = '';
+    document.getElementById('trendChartInline').style.display = 'none';
+    document.getElementById('trend-empty').style.display = '';
+    document.getElementById('trendChart').style.display = 'none';
+    return;
+  }
+  renderChart('trendChartInline', chartData);
+});
 </script>
 
 <%- include('partials/footer') %>
