@@ -176,6 +176,7 @@ function buildChartOptions() {
     plugins: {
       legend: { display: false },
       tooltip: {
+        itemSort: (a, b) => b.parsed.y - a.parsed.y,
         callbacks: {
           label: c => `${c.dataset.label}${c.dataset.flag ? ' '+c.dataset.flag : ''}: ${c.parsed.y > 0 ? '+' : ''}${c.parsed.y}`
         }
