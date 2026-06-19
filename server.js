@@ -81,7 +81,7 @@ initSqlJs().then(async SQL => {
 
   // 积分走势图数据：按比赛时间排序，每个用户的累积积分
   app.get('/leaderboard/chart-data', (req, res) => {
-    const users = db.prepare('SELECT id, nickname FROM users').all();
+    const users = db.prepare('SELECT id, nickname, predicted_champion FROM users').all();
     // 按比赛时间排序的积分记录（用 match_time 而非 created_at，更贴近赛事进度）
     const logs = db.prepare(`
       SELECT pl.user_id, pl.points, m.match_time, m.home_team, m.away_team
@@ -100,19 +100,20 @@ initSqlJs().then(async SQL => {
       if (!seen.has(key)) { seen.add(key); timeSet.push(key); }
     }
 
-    // 每个用户累积积分随时间变化
+    // FT 风格配色（参考 Financial Times 图表色板）
     const COLORS = [
-      '#ef4444','#3b82f6','#10b981','#f59e0b','#8b5cf6',
-      '#ec4899','#06b6d4','#84cc16','#f97316','#6366f1',
-      '#14b8a6','#e11d48','#0ea5e9','#a3e635','#d946ef',
+      '#990F3D','#0F5499','#00994D','#F4AF0D','#593380',
+      '#FF7FAB','#00A0DD','#00BAD2','#FF8833','#006D9C',
+      '#007B5E','#C3120C','#7B4F00','#0C6F5A','#8B1ACA',
     ];
+
+    const { FLAGS: FT_FLAGS } = require('./lib/helpers');
 
     const datasets = users.map((u, i) => {
       const userLogs = logs.filter(l => l.user_id === u.id);
       if (userLogs.length === 0) return null;
 
       let running = 0;
-      // 积累每个时间点后的总分（没有比赛就延续上一个值）
       const logByTime = {};
       for (const l of userLogs) logByTime[l.match_time] = (logByTime[l.match_time] || 0) + l.points;
 
@@ -123,8 +124,9 @@ initSqlJs().then(async SQL => {
       }
 
       const color = COLORS[i % COLORS.length];
-      return { label: u.nickname, data, borderColor: color, backgroundColor: color + '22',
-               tension: 0.3, pointRadius: 3, pointHoverRadius: 6, borderWidth: 2 };
+      const flag = u.predicted_champion ? (FT_FLAGS[u.predicted_champion] || '') : '';
+      return { label: u.nickname, flag, data, borderColor: color, backgroundColor: color + '18',
+               tension: 0.3, pointRadius: 3, pointHoverRadius: 6, borderWidth: 2.5 };
     }).filter(Boolean);
 
     const labels = timeSet.map(t => {

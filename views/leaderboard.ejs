@@ -124,7 +124,7 @@
 
   <!-- 积分走势图 -->
   <div id="tab-trend" class="lb-table-wrap" style="display:none">
-    <div style="position:relative;height:420px;padding:.5rem 0">
+    <div style="position:relative;height:520px;padding:.5rem 0">
       <canvas id="trendChart"></canvas>
     </div>
     <div id="trend-empty" class="empty-state" style="display:none;padding:3rem">暂无积分记录</div>
@@ -133,7 +133,7 @@
   <!-- 积分走势（嵌入在积分排行 tab 下方，共用数据） -->
   <div id="points-trend-wrap" style="margin-top:2rem;display:block">
     <div class="section-header" style="margin-bottom:.75rem"><h3 style="margin:0;font-size:1rem;color:#374151">📈 积分走势</h3></div>
-    <div style="position:relative;height:320px">
+    <div style="position:relative;height:400px">
       <canvas id="trendChartInline"></canvas>
     </div>
     <div id="points-trend-empty" class="empty-state" style="display:none;padding:2rem">暂无积分记录</div>
@@ -152,31 +152,37 @@ const TABS = ['points','wins','champion','trend'];
 let chartData = null;
 let trendChartRendered = false;
 
-// 估算最长人名宽度（px），为右侧留出足够空间
+// 右侧留白：最长标签（人名+旗帜）所需宽度
 function labelPadding(datasets) {
-  const longest = datasets.reduce((m, d) => d.label.length > m ? d.label.length : m, 0);
-  return Math.max(longest * 8 + 10, 40);
+  const longest = datasets.reduce((m, d) => {
+    const len = (d.label + (d.flag || '')).length;
+    return len > m ? len : m;
+  }, 0);
+  return Math.max(longest * 9 + 14, 50);
 }
 
 function buildChartOptions(rightPad) {
   return {
     responsive: true,
     maintainAspectRatio: false,
-    layout: { padding: { right: rightPad } },
+    layout: { padding: { right: rightPad, top: 8 } },
     interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: c => `${c.dataset.label}: ${c.parsed.y > 0 ? '+' : ''}${c.parsed.y}`
+          label: c => `${c.dataset.label}${c.dataset.flag ? ' '+c.dataset.flag : ''}: ${c.parsed.y > 0 ? '+' : ''}${c.parsed.y}`
         }
       }
     },
     scales: {
-      x: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 12 } } },
+      x: {
+        grid: { color: '#e8e8e8' },
+        ticks: { font: { size: 11 }, color: '#666' }
+      },
       y: {
-        grid: { color: '#f0f0f0' },
-        ticks: { font: { size: 12 }, callback: v => (v > 0 ? '+' : '') + v }
+        grid: { color: '#e8e8e8' },
+        ticks: { font: { size: 11 }, color: '#666', callback: v => (v > 0 ? '+' : '') + v }
       }
     },
     animation: {
@@ -184,14 +190,30 @@ function buildChartOptions(rightPad) {
         const chart = this;
         const ctx2 = chart.ctx;
         ctx2.save();
-        ctx2.font = 'bold 12px sans-serif';
+        ctx2.font = '600 12px -apple-system,sans-serif';
         ctx2.textAlign = 'left';
+
+        // 收集末端坐标，按 y 排序后防重叠
+        const entries = [];
         chart.data.datasets.forEach((ds, i) => {
           const meta = chart.getDatasetMeta(i);
           if (!meta.visible || meta.data.length === 0) return;
           const last = meta.data[meta.data.length - 1];
-          ctx2.fillStyle = ds.borderColor;
-          ctx2.fillText(ds.label, last.x + 6, last.y + 4);
+          entries.push({ x: last.x, y: last.y, color: ds.borderColor,
+                         text: ds.label + (ds.flag ? ' ' + ds.flag : '') });
+        });
+
+        // 按 y 排序后，相邻标签最小间距 16px
+        entries.sort((a, b) => a.y - b.y);
+        for (let i = 1; i < entries.length; i++) {
+          if (entries[i].y - entries[i-1].y < 16) {
+            entries[i].y = entries[i-1].y + 16;
+          }
+        }
+
+        entries.forEach(e => {
+          ctx2.fillStyle = e.color;
+          ctx2.fillText(e.text, e.x + 7, e.y + 4);
         });
         ctx2.restore();
       }
