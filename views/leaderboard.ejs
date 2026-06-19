@@ -124,18 +124,20 @@
 
   <!-- 积分走势图 -->
   <div id="tab-trend" class="lb-table-wrap" style="display:none">
-    <div style="position:relative;height:520px;padding:.5rem 0">
+    <div style="position:relative;height:480px;padding:.5rem 0">
       <canvas id="trendChart"></canvas>
     </div>
+    <div id="trendLegend" class="chart-legend"></div>
     <div id="trend-empty" class="empty-state" style="display:none;padding:3rem">暂无积分记录</div>
   </div>
 
   <!-- 积分走势（嵌入在积分排行 tab 下方，共用数据） -->
   <div id="points-trend-wrap" style="margin-top:2rem;display:block">
     <div class="section-header" style="margin-bottom:.75rem"><h3 style="margin:0;font-size:1rem;color:#374151">📈 积分走势</h3></div>
-    <div style="position:relative;height:400px">
+    <div style="position:relative;height:380px">
       <canvas id="trendChartInline"></canvas>
     </div>
+    <div id="inlineLegend" class="chart-legend"></div>
     <div id="points-trend-empty" class="empty-state" style="display:none;padding:2rem">暂无积分记录</div>
   </div>
 
@@ -152,20 +154,24 @@ const TABS = ['points','wins','champion','trend'];
 let chartData = null;
 let trendChartRendered = false;
 
-// 右侧留白：最长标签（人名+旗帜）所需宽度
-function labelPadding(datasets) {
-  const longest = datasets.reduce((m, d) => {
-    const len = (d.label + (d.flag || '')).length;
-    return len > m ? len : m;
-  }, 0);
-  return Math.max(longest * 9 + 14, 50);
+const hasCurrentUser = !!document.cookie.match(/connect\.sid/);
+
+function applyUserHighlight(datasets) {
+  const hasSelf = datasets.some(d => d.isCurrentUser);
+  return datasets.map(d => {
+    const isSelf = d.isCurrentUser;
+    return Object.assign({}, d, {
+      borderWidth: hasSelf ? (isSelf ? 3.5 : 1.2) : 2,
+      borderColor: hasSelf && !isSelf ? d.borderColor + '55' : d.borderColor,
+    });
+  });
 }
 
-function buildChartOptions(rightPad) {
+function buildChartOptions() {
   return {
     responsive: true,
     maintainAspectRatio: false,
-    layout: { padding: { right: rightPad, top: 8 } },
+    layout: { padding: { top: 8, right: 8 } },
     interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: { display: false },
@@ -176,56 +182,34 @@ function buildChartOptions(rightPad) {
       }
     },
     scales: {
-      x: {
-        grid: { color: '#e8e8e8' },
-        ticks: { font: { size: 11 }, color: '#666' }
-      },
-      y: {
-        grid: { color: '#e8e8e8' },
-        ticks: { font: { size: 11 }, color: '#666', callback: v => (v > 0 ? '+' : '') + v }
-      }
-    },
-    animation: {
-      onComplete() {
-        const chart = this;
-        const ctx2 = chart.ctx;
-        ctx2.save();
-        ctx2.font = '600 12px -apple-system,sans-serif';
-        ctx2.textAlign = 'left';
-
-        // 收集末端坐标，按 y 排序后防重叠
-        const entries = [];
-        chart.data.datasets.forEach((ds, i) => {
-          const meta = chart.getDatasetMeta(i);
-          if (!meta.visible || meta.data.length === 0) return;
-          const last = meta.data[meta.data.length - 1];
-          entries.push({ x: last.x, y: last.y, color: ds.borderColor,
-                         text: ds.label + (ds.flag ? ' ' + ds.flag : '') });
-        });
-
-        // 按 y 排序后，相邻标签最小间距 16px
-        entries.sort((a, b) => a.y - b.y);
-        for (let i = 1; i < entries.length; i++) {
-          if (entries[i].y - entries[i-1].y < 16) {
-            entries[i].y = entries[i-1].y + 16;
-          }
-        }
-
-        entries.forEach(e => {
-          ctx2.fillStyle = e.color;
-          ctx2.fillText(e.text, e.x + 7, e.y + 4);
-        });
-        ctx2.restore();
-      }
+      x: { grid: { color: '#e8e8e8' }, ticks: { font: { size: 11 }, color: '#666', maxRotation: 45 } },
+      y: { grid: { color: '#e8e8e8' }, ticks: { font: { size: 11 }, color: '#666', callback: v => (v > 0 ? '+' : '') + v } }
     }
   };
 }
 
-function renderChart(canvasId, data) {
-  const pad = labelPadding(data.datasets);
-  new Chart(document.getElementById(canvasId).getContext('2d'), {
-    type: 'line', data, options: buildChartOptions(pad)
+function buildLegend(datasets, containerId) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  // 已登录用户自己排最前
+  const sorted = [...datasets].sort((a, b) => (b.isCurrentUser ? 1 : 0) - (a.isCurrentUser ? 1 : 0));
+  sorted.forEach(d => {
+    const item = document.createElement('div');
+    item.className = 'chart-legend-item' + (d.isCurrentUser ? ' chart-legend-self' : '');
+    item.innerHTML = `<span class="chart-legend-dot" style="background:${d.borderColor}"></span>${d.label}${d.flag ? ' '+d.flag : ''}`;
+    wrap.appendChild(item);
   });
+}
+
+function renderChart(canvasId, legendId, data) {
+  const highlighted = applyUserHighlight(data.datasets);
+  new Chart(document.getElementById(canvasId).getContext('2d'), {
+    type: 'line',
+    data: { labels: data.labels, datasets: highlighted },
+    options: buildChartOptions()
+  });
+  buildLegend(data.datasets, legendId);
 }
 
 function switchTab(tab) {
@@ -244,7 +228,7 @@ function switchTab(tab) {
         document.getElementById('trendChart').style.display = 'none';
         document.getElementById('trend-empty').style.display = '';
       } else {
-        renderChart('trendChart', chartData);
+        renderChart('trendChart', 'trendLegend', chartData);
       }
     };
     chartData ? doRender() : loadChartData(doRender);
@@ -267,7 +251,7 @@ loadChartData(() => {
     document.getElementById('trendChart').style.display = 'none';
     return;
   }
-  renderChart('trendChartInline', chartData);
+  renderChart('trendChartInline', 'inlineLegend', chartData);
 });
 </script>
 

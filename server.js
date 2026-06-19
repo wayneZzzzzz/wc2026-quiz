@@ -125,8 +125,10 @@ initSqlJs().then(async SQL => {
 
       const color = COLORS[i % COLORS.length];
       const flag = u.predicted_champion ? (FT_FLAGS[u.predicted_champion] || '') : '';
-      return { label: u.nickname, flag, data, borderColor: color, backgroundColor: color + '18',
-               tension: 0.3, pointRadius: 3, pointHoverRadius: 6, borderWidth: 2.5 };
+      const isCurrentUser = req.session.user ? req.session.user.id === u.id : false;
+      return { label: u.nickname, flag, isCurrentUser, data,
+               borderColor: color, backgroundColor: color + '18',
+               tension: 0.3, pointRadius: 0, pointHoverRadius: 4, borderWidth: 2 };
     }).filter(Boolean);
 
     const labels = timeSet.map(t => {
