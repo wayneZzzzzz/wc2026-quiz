@@ -119,6 +119,43 @@ async function initDb(SqlLib) {
   try { sqlDb.run('ALTER TABLE matches ADD COLUMN away_score INTEGER'); } catch(e) {}
   // 迁移：修正苏格兰vs摩洛哥比赛时间（原19:00 UTC有误，应为22:00 UTC）
   sqlDb.run(`UPDATE matches SET match_time='2026-06-19 22:00' WHERE home_team='苏格兰' AND away_team='摩洛哥' AND match_time='2026-06-19 19:00'`);
+  // 迁移：修正各组第3轮（最后一轮）共24场比赛时间（原始时间均有误，参照ESPN/Yahoo官方ET时间重新换算UTC）
+  // A组 (Jun 24 9PM ET = Jun 25 01:00 UTC)
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-25 01:00' WHERE home_team='南非' AND away_team='韩国' AND match_time='2026-06-23 00:00'`);
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-25 01:00' WHERE home_team='捷克' AND away_team='墨西哥' AND match_time='2026-06-23 00:00'`);
+  // B组 (Jun 24 3PM ET = Jun 24 19:00 UTC)
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-24 19:00' WHERE home_team='波黑' AND away_team='卡塔尔' AND match_time='2026-06-23 21:00'`);
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-24 19:00' WHERE home_team='瑞士' AND away_team='加拿大' AND match_time='2026-06-23 21:00'`);
+  // C组 (Jun 24 6PM ET = Jun 24 22:00 UTC)
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-24 22:00' WHERE home_team='摩洛哥' AND away_team='海地' AND match_time='2026-06-24 00:00'`);
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-24 22:00' WHERE home_team='苏格兰' AND away_team='巴西' AND match_time='2026-06-24 00:00'`);
+  // D组 (Jun 25 10PM ET = Jun 26 02:00 UTC)
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-26 02:00' WHERE home_team='澳大利亚' AND away_team='巴拉圭' AND match_time='2026-06-24 21:00'`);
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-26 02:00' WHERE home_team='土耳其' AND away_team='美国' AND match_time='2026-06-24 21:00'`);
+  // E组 (Jun 25 4PM ET = Jun 25 20:00 UTC)
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-25 20:00' WHERE home_team='科特迪瓦' AND away_team='库拉索' AND match_time='2026-06-25 00:00'`);
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-25 20:00' WHERE home_team='厄瓜多尔' AND away_team='德国' AND match_time='2026-06-25 00:00'`);
+  // F组 (Jun 25 7PM ET = Jun 25 23:00 UTC)
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-25 23:00' WHERE home_team='日本' AND away_team='瑞典' AND match_time='2026-06-25 03:00'`);
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-25 23:00' WHERE home_team='突尼斯' AND away_team='荷兰' AND match_time='2026-06-25 03:00'`);
+  // G组 (Jun 26 11PM ET = Jun 27 03:00 UTC)
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-27 03:00' WHERE home_team='埃及' AND away_team='伊朗' AND match_time='2026-06-25 22:00'`);
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-27 03:00' WHERE home_team='新西兰' AND away_team='比利时' AND match_time='2026-06-25 22:00'`);
+  // H组 (Jun 26 8PM ET = Jun 27 00:00 UTC)
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-27 00:00' WHERE home_team='佛得角' AND away_team='沙特阿拉伯' AND match_time='2026-06-25 18:00'`);
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-27 00:00' WHERE home_team='乌拉圭' AND away_team='西班牙' AND match_time='2026-06-25 18:00'`);
+  // I组 (Jun 26 3PM ET = Jun 26 19:00 UTC)
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-26 19:00' WHERE home_team='塞内加尔' AND away_team='伊拉克' AND match_time='2026-06-26 21:00'`);
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-26 19:00' WHERE home_team='挪威' AND away_team='法国' AND match_time='2026-06-26 21:00'`);
+  // J组 (Jun 27 10PM ET = Jun 28 02:00 UTC)
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-28 02:00' WHERE home_team='阿尔及利亚' AND away_team='奥地利' AND match_time='2026-06-26 18:00'`);
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-28 02:00' WHERE home_team='约旦' AND away_team='阿根廷' AND match_time='2026-06-26 18:00'`);
+  // K组 (Jun 27 7:30PM ET = Jun 27 23:30 UTC)
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-27 23:30' WHERE home_team='刚果' AND away_team='乌兹别克斯坦' AND match_time='2026-06-27 20:00'`);
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-27 23:30' WHERE home_team='哥伦比亚' AND away_team='葡萄牙' AND match_time='2026-06-27 20:00'`);
+  // L组 (Jun 27 5PM ET = Jun 27 21:00 UTC)
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-27 21:00' WHERE home_team='克罗地亚' AND away_team='加纳' AND match_time='2026-06-27 22:00'`);
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-27 21:00' WHERE home_team='巴拿马' AND away_team='英格兰' AND match_time='2026-06-27 22:00'`);
 
   sqlDb.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
