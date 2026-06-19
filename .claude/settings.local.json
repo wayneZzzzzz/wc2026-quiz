@@ -66,7 +66,15 @@
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(e['home_team'],e['away_team'],e['completed'],e.get\\('scores'\\)\\) for e in d]\")",
       "Bash(ODDS_API_KEY=4f41f49d9af2f7aa3f46183ec571d452 node -e ' *)",
       "Bash(git commit *)",
-      "Bash(ls ~/ | head -50; echo \"---\"; ls ~/insurtech-platform 2>/dev/null | head -40)"
+      "Bash(ls ~/ | head -50; echo \"---\"; ls ~/insurtech-platform 2>/dev/null | head -40)",
+      "Bash(curl -s http://localhost:3000/leaderboard/chart-data)",
+      "Bash(kill 8299)",
+      "Bash(ODDS_API_KEY=4f41f49d9af2f7aa3f46183ec571d452 node server.js)",
+      "Bash(echo \"pid=$!\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('labels:',d['labels'][:5]\\); [print\\(ds['label'],ds['data']\\) for ds in d['datasets']]\")",
+      "Bash(kill 8345)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('labels:',d['labels'][:6]\\); [print\\(ds['label'],ds['data']\\) for ds in d['datasets']]\")",
+      "Bash(kill 8376)"
     ]
   }
 }
