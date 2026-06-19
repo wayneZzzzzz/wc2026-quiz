@@ -117,6 +117,8 @@ async function initDb(SqlLib) {
   // 迁移：加比分字段
   try { sqlDb.run('ALTER TABLE matches ADD COLUMN home_score INTEGER'); } catch(e) {}
   try { sqlDb.run('ALTER TABLE matches ADD COLUMN away_score INTEGER'); } catch(e) {}
+  // 迁移：修正苏格兰vs摩洛哥比赛时间（原19:00 UTC有误，应为22:00 UTC）
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-19 22:00' WHERE home_team='苏格兰' AND away_team='摩洛哥' AND match_time='2026-06-19 19:00'`);
 
   sqlDb.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

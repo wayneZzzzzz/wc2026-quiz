@@ -74,7 +74,8 @@
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('labels:',d['labels'][:5]\\); [print\\(ds['label'],ds['data']\\) for ds in d['datasets']]\")",
       "Bash(kill 8345)",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('labels:',d['labels'][:6]\\); [print\\(ds['label'],ds['data']\\) for ds in d['datasets']]\")",
-      "Bash(kill 8376)"
+      "Bash(kill 8376)",
+      "Bash(curl -s \"https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/odds/?apiKey=4f41f49d9af2f7aa3f46183ec571d452&regions=eu&markets=spreads&oddsFormat=decimal\")"
     ]
   }
 }
