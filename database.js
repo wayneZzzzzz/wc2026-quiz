@@ -114,12 +114,39 @@ async function initDb(SqlLib) {
   sqlDb = dbBuffer ? new SQL.Database(dbBuffer) : new SQL.Database();
 
   sqlDb.run(`PRAGMA foreign_keys = ON`);
-  // 迁移：加比分字段
+
+  sqlDb.run(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nickname TEXT UNIQUE NOT NULL,
+    total_points INTEGER DEFAULT 0, wins INTEGER DEFAULT 0,
+    total_votes INTEGER DEFAULT 0,
+    predicted_champion TEXT DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+  // 迁移：加冠军预测字段
+  try { sqlDb.run('ALTER TABLE users ADD COLUMN predicted_champion TEXT DEFAULT NULL'); } catch(e) {}
+  // 迁移：淘汰队伍表
+  sqlDb.run(`CREATE TABLE IF NOT EXISTS eliminated_teams (
+    team TEXT PRIMARY KEY,
+    eliminated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+  sqlDb.run(`CREATE TABLE IF NOT EXISTS matches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    home_team TEXT NOT NULL, away_team TEXT NOT NULL,
+    match_time DATETIME NOT NULL, stage TEXT NOT NULL,
+    handicap_desc TEXT NOT NULL,
+    option_a TEXT NOT NULL, option_b TEXT NOT NULL, option_c TEXT NOT NULL,
+    result TEXT, home_score INTEGER, away_score INTEGER,
+    status TEXT DEFAULT 'upcoming',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+  // 迁移：加比分字段（必须在 CREATE TABLE 之后，ALTER TABLE 对新建表无意义但无害）
   try { sqlDb.run('ALTER TABLE matches ADD COLUMN home_score INTEGER'); } catch(e) {}
   try { sqlDb.run('ALTER TABLE matches ADD COLUMN away_score INTEGER'); } catch(e) {}
-  // 迁移：修正苏格兰vs摩洛哥比赛时间（原19:00 UTC有误，应为22:00 UTC）
+  // 迁移：修正比赛时间（所有 UPDATE 必须在 CREATE TABLE 之后，否则空库启动时会 crash）
+  // 苏格兰vs摩洛哥（原19:00 UTC有误，应为22:00 UTC）
   sqlDb.run(`UPDATE matches SET match_time='2026-06-19 22:00' WHERE home_team='苏格兰' AND away_team='摩洛哥' AND match_time='2026-06-19 19:00'`);
-  // 迁移：修正各组第3轮（最后一轮）共24场比赛时间（原始时间均有误，参照ESPN/Yahoo官方ET时间重新换算UTC）
+  // 各组第3轮共24场（参照ESPN/Yahoo官方ET→UTC重算）
   // A组 (Jun 24 9PM ET = Jun 25 01:00 UTC)
   sqlDb.run(`UPDATE matches SET match_time='2026-06-25 01:00' WHERE home_team='南非' AND away_team='韩国' AND match_time='2026-06-23 00:00'`);
   sqlDb.run(`UPDATE matches SET match_time='2026-06-25 01:00' WHERE home_team='捷克' AND away_team='墨西哥' AND match_time='2026-06-23 00:00'`);
@@ -157,31 +184,6 @@ async function initDb(SqlLib) {
   sqlDb.run(`UPDATE matches SET match_time='2026-06-27 21:00' WHERE home_team='克罗地亚' AND away_team='加纳' AND match_time='2026-06-27 22:00'`);
   sqlDb.run(`UPDATE matches SET match_time='2026-06-27 21:00' WHERE home_team='巴拿马' AND away_team='英格兰' AND match_time='2026-06-27 22:00'`);
 
-  sqlDb.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nickname TEXT UNIQUE NOT NULL,
-    total_points INTEGER DEFAULT 0, wins INTEGER DEFAULT 0,
-    total_votes INTEGER DEFAULT 0,
-    predicted_champion TEXT DEFAULT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
-  // 迁移：加冠军预测字段
-  try { sqlDb.run('ALTER TABLE users ADD COLUMN predicted_champion TEXT DEFAULT NULL'); } catch(e) {}
-  // 迁移：淘汰队伍表
-  sqlDb.run(`CREATE TABLE IF NOT EXISTS eliminated_teams (
-    team TEXT PRIMARY KEY,
-    eliminated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
-  sqlDb.run(`CREATE TABLE IF NOT EXISTS matches (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    home_team TEXT NOT NULL, away_team TEXT NOT NULL,
-    match_time DATETIME NOT NULL, stage TEXT NOT NULL,
-    handicap_desc TEXT NOT NULL,
-    option_a TEXT NOT NULL, option_b TEXT NOT NULL, option_c TEXT NOT NULL,
-    result TEXT, home_score INTEGER, away_score INTEGER,
-    status TEXT DEFAULT 'upcoming',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
   sqlDb.run(`CREATE TABLE IF NOT EXISTS votes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL, match_id INTEGER NOT NULL,
