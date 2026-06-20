@@ -27,7 +27,7 @@ const GROUP_STAGE = [
   { home:'巴西', away:'摩洛哥', time:'2026-06-13 22:00', stage:'小组赛 C组' },
   { home:'海地', away:'苏格兰', time:'2026-06-14 01:00', stage:'小组赛 C组' },
   { home:'苏格兰', away:'摩洛哥', time:'2026-06-19 22:00', stage:'小组赛 C组' },
-  { home:'巴西', away:'海地', time:'2026-06-20 01:00', stage:'小组赛 C组' },
+  { home:'巴西', away:'海地', time:'2026-06-20 00:30', stage:'小组赛 C组' },
   { home:'摩洛哥', away:'海地', time:'2026-06-24 22:00', stage:'小组赛 C组' },
   { home:'苏格兰', away:'巴西', time:'2026-06-24 22:00', stage:'小组赛 C组' },
 
