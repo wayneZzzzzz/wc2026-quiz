@@ -35,7 +35,7 @@ const GROUP_STAGE = [
   { home:'美国', away:'巴拉圭', time:'2026-06-13 01:00', stage:'小组赛 D组' },
   { home:'澳大利亚', away:'土耳其', time:'2026-06-14 04:00', stage:'小组赛 D组' },
   { home:'美国', away:'澳大利亚', time:'2026-06-19 19:00', stage:'小组赛 D组' },
-  { home:'土耳其', away:'巴拉圭', time:'2026-06-20 04:00', stage:'小组赛 D组' },
+  { home:'土耳其', away:'巴拉圭', time:'2026-06-20 03:00', stage:'小组赛 D组' },
   { home:'澳大利亚', away:'巴拉圭', time:'2026-06-26 02:00', stage:'小组赛 D组' },
   { home:'土耳其', away:'美国', time:'2026-06-26 02:00', stage:'小组赛 D组' },
 

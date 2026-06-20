@@ -148,6 +148,8 @@ async function initDb(SqlLib) {
   sqlDb.run(`UPDATE matches SET match_time='2026-06-19 22:00' WHERE home_team='苏格兰' AND away_team='摩洛哥' AND match_time='2026-06-19 19:00'`);
   // 巴西vs海地（原01:00 UTC有误，应为00:30 UTC，官方8:30PM ET，FOX/Yahoo双源确认）
   sqlDb.run(`UPDATE matches SET match_time='2026-06-20 00:30' WHERE home_team='巴西' AND away_team='海地' AND match_time='2026-06-20 01:00'`);
+  // 土耳其vs巴拉圭（原04:00 UTC有误，应为03:00 UTC，11PM ET，ESPN/Wikipedia双源确认）
+  sqlDb.run(`UPDATE matches SET match_time='2026-06-20 03:00' WHERE home_team='土耳其' AND away_team='巴拉圭' AND match_time='2026-06-20 04:00'`);
   // 各组第3轮共24场（参照ESPN/Yahoo官方ET→UTC重算）
   // A组 (Jun 24 9PM ET = Jun 25 01:00 UTC)
   sqlDb.run(`UPDATE matches SET match_time='2026-06-25 01:00' WHERE home_team='南非' AND away_team='韩国' AND match_time='2026-06-23 00:00'`);
