@@ -41,6 +41,16 @@ function roundQuarterBall(absLine, giverDecimalOdds) {
   }
 }
 
+// 整数/半球盘口在赔率极端时再做 ±0.5 微调，让A/B/C三个选项概率更均衡。
+// 例：让1球但让球方赔率极低（≤1.5，几乎必赢更多球）→ 加深至让1.5球；
+//     让1球但让球方赔率极高（≥2.75，覆盖让球概率偏低）→ 收窄至让0.5球（最低收到0，平手盘）。
+// 该调整在 roundQuarterBall 之后执行，只在赔率非常极端时触发，不影响正常盘口。
+function balanceExtremeOdds(line, giverDecimalOdds) {
+  if (giverDecimalOdds <= 1.5) return line + 0.5;
+  if (giverDecimalOdds >= 2.75) return Math.max(0, line - 0.5);
+  return line;
+}
+
 // 根据球队名和让球数生成直白中文描述
 function buildHandicapInfo(giverTeam, receiverTeam, absLine) {
   let desc, optA, optB, optC;
@@ -111,11 +121,15 @@ async function updateOdds() {
 
   let resp;
   try { resp = await fetchJson(API_URL); }
-  catch (e) { console.error('[盘口] 请求失败:', e.message); return { updated: 0 }; }
+  catch (e) {
+    console.error('[盘口] 请求失败:', e.message);
+    return { updated: 0, error: `请求失败: ${e.message}` };
+  }
 
   if (resp.status !== 200) {
-    console.error('[盘口] API错误:', resp.status, JSON.stringify(resp.body).slice(0, 200));
-    return { updated: 0 };
+    const apiMsg = resp.body?.message || JSON.stringify(resp.body).slice(0, 200);
+    console.error('[盘口] API错误:', resp.status, apiMsg);
+    return { updated: 0, error: `API错误(${resp.status}): ${apiMsg}` };
   }
 
   let updated = 0, skipped = 0;
@@ -159,8 +173,9 @@ async function updateOdds() {
     const rawAbs = Math.abs(giverOut.point);
     const giverPrice = giverOut.price; // decimal odds
 
-    // 去掉赢半/输半：四分之一球取整
-    const cleanAbs = roundQuarterBall(rawAbs, giverPrice);
+    // 去掉赢半/输半：四分之一球取整 → 极端赔率下再±0.5微调，保证三选项均衡
+    const quarterRounded = roundQuarterBall(rawAbs, giverPrice);
+    const cleanAbs = balanceExtremeOdds(quarterRounded, giverPrice);
 
     // 如果取整发生了，打印说明
     const rounded = cleanAbs !== rawAbs

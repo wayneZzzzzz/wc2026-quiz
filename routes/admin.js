@@ -41,10 +41,13 @@ module.exports = function(db) {
     try {
       const updateOdds = require('../scripts/update-odds');
       const r = await updateOdds();
+      if (r.error) {
+        return res.redirect(`/admin?oddsRefreshed=err&oddsErrMsg=${encodeURIComponent(r.error)}`);
+      }
       res.redirect(`/admin?oddsRefreshed=${r.updated}`);
     } catch (e) {
       console.error('[手动盘口刷新]', e.message);
-      res.redirect('/admin?oddsRefreshed=err');
+      res.redirect(`/admin?oddsRefreshed=err&oddsErrMsg=${encodeURIComponent(e.message)}`);
     }
   });
 

@@ -17,7 +17,7 @@
 
   <% if (typeof query !== 'undefined' && query.oddsRefreshed !== undefined) { %>
     <% if (query.oddsRefreshed === 'err') { %>
-      <div class="alert alert-error">盘口刷新失败，请查看服务器日志</div>
+      <div class="alert alert-error">盘口刷新失败<%= query.oddsErrMsg ? '：' + query.oddsErrMsg : '，请查看服务器日志' %></div>
     <% } else { %>
       <div class="alert alert-success">盘口刷新完成，本次更新 <%= query.oddsRefreshed %> 场（已有投票的比赛已跳过）</div>
     <% } %>
