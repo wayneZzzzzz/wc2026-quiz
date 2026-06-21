@@ -141,6 +141,36 @@ initSqlJs().then(async SQL => {
     res.json({ labels, datasets });
   });
 
+  // 设置Pin码页（防止冒用他人账号登录）
+  app.get('/set-pin', (req, res) => {
+    if (!req.session.user) return res.redirect('/login');
+    res.render('set-pin', { title: '设置Pin码', error: null });
+  });
+
+  app.post('/set-pin', async (req, res) => {
+    if (!req.session.user) return res.redirect('/login');
+    const { pin, pin2 } = req.body;
+    if (!/^\d{4}$/.test(pin || '')) {
+      return res.render('set-pin', { title: '设置Pin码', error: '请输入4位数字Pin码' });
+    }
+    if (pin !== pin2) {
+      return res.render('set-pin', { title: '设置Pin码', error: '两次输入的Pin码不一致' });
+    }
+    db.prepare('UPDATE users SET pin=? WHERE id=?').run(pin, req.session.user.id);
+    // 立即强制同步 Gist（Pin码是关键安全数据）
+    const gist = require('./lib/gist-backup');
+    if (gist.isEnabled()) {
+      const { sqlDb } = require('./database');
+      if (sqlDb) {
+        try { await gist.upload(Buffer.from(sqlDb.export())); }
+        catch(e) { console.warn('[Pin] Gist 同步失败:', e.message); }
+      }
+    }
+    const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.session.user.id);
+    if (!user.predicted_champion) return res.redirect('/pick-champion');
+    res.redirect('/');
+  });
+
   // 冠军预测选择页
   app.get('/pick-champion', (req, res) => {
     if (!req.session.user) return res.redirect('/login');

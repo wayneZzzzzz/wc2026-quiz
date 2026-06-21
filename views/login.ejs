@@ -4,7 +4,7 @@
   <div class="auth-card">
     <div class="auth-icon">⚽</div>
     <h1 class="auth-title">加入竞猜</h1>
-    <p class="auth-sub">输入昵称即可加入，无需密码</p>
+    <p class="auth-sub">输入昵称加入；已设置Pin码的账号需输入Pin码登录</p>
 
     <% if (error) { %>
       <div class="alert alert-error"><%= error %></div>
@@ -32,6 +32,11 @@
         <div class="form-hint">
           ⚠️ 昵称区分大小写，再次登入请保持与上次完全一致（如：<strong>Wayne</strong> 和 <strong>wayne</strong> 是不同账号）
         </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Pin码（首次登录可不填，之后会要求设置）</label>
+        <input type="text" name="pin" class="form-input" inputmode="numeric" pattern="\d{4}"
+          maxlength="4" placeholder="如已设置Pin码请输入">
       </div>
       <button type="submit" class="btn btn-primary btn-block">进入竞猜</button>
     </form>

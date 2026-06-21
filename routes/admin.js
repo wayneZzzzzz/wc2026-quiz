@@ -332,6 +332,12 @@ module.exports = function(db) {
     res.redirect('/admin');
   });
 
+  // ===== 重置用户Pin码（用户忘记或需要管理员协助重置）=====
+  router.post('/users/:id/reset-pin', requireAdmin, (req, res) => {
+    db.prepare('UPDATE users SET pin=NULL WHERE id=?').run(req.params.id);
+    res.redirect('/admin');
+  });
+
   // 清空所有测试数据（保留比赛和盘口）
   router.post('/reset-all', requireAdmin, (req, res) => {
     db.transaction(() => {

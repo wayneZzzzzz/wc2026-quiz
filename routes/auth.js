@@ -29,9 +29,10 @@ module.exports = function(db) {
   });
 
   router.post('/login', (req, res) => {
-    const { nickname } = req.body;
+    const { nickname, pin } = req.body;
+    const existingUsers = db.prepare('SELECT nickname FROM users ORDER BY created_at ASC').all();
     if (!nickname || !nickname.trim()) {
-      return res.render('login', { title: '加入竞猜', error: '请输入昵称' });
+      return res.render('login', { title: '加入竞猜', error: '请输入昵称', existingUsers });
     }
     const clean = nickname.trim().slice(0, 20);
     let user = db.prepare('SELECT * FROM users WHERE nickname = ?').get(clean);
@@ -39,8 +40,17 @@ module.exports = function(db) {
     if (!user) {
       const result = db.prepare('INSERT INTO users (nickname) VALUES (?)').run(clean);
       user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+    } else if (user.pin) {
+      // 已设置Pin码的账号，登录必须验证Pin
+      if (!pin || pin !== user.pin) {
+        return res.render('login', { title: '加入竞猜', error: 'Pin码错误，请输入正确的4位Pin码', existingUsers });
+      }
     }
     req.session.user = { id: user.id, nickname: user.nickname };
+    // 未设置Pin码 → 每次登录提醒设置；已设置 → 跳过
+    if (!user.pin) {
+      return res.redirect('/set-pin');
+    }
     // 未选择冠军（包括跳过的用户）→ 每次登录提醒；已选择 → 直接进首页
     if (!user.predicted_champion) {
       return res.redirect('/pick-champion');

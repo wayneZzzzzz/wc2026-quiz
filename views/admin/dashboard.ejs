@@ -117,6 +117,7 @@
                   </span>
                   · <%= u.wins %>胜 · <%= u.total_votes %>场
                   · <strong><%= u.total_votes > 0 ? (u.wins/u.total_votes*100).toFixed(1) : '0.0' %>%</strong>胜率
+                  · Pin码：<% if (u.pin) { %><strong><%= u.pin %></strong><% } else { %><span style="color:#9ca3af">未设置</span><% } %>
                 </span>
               </div>
               <div class="user-row-actions">
@@ -128,6 +129,12 @@
                 </form>
                 <div class="user-btns" id="btns-<%= u.id %>">
                   <button class="btn btn-sm btn-outline" onclick="showRename(<%= u.id %>)">✏️ 改名</button>
+                  <% if (u.pin) { %>
+                    <form method="POST" action="/admin/users/<%= u.id %>/reset-pin" style="display:inline"
+                          onsubmit="return confirm('确认重置「<%= u.nickname %>」的Pin码？重置后该用户下次登录需重新设置。')">
+                      <button class="btn btn-sm btn-outline">🔑 重置Pin码</button>
+                    </form>
+                  <% } %>
                   <form method="POST" action="/admin/users/<%= u.id %>/reset-points" style="display:inline"
                         onsubmit="return confirm('确认重置「<%= u.nickname %>」的积分？')">
                     <button class="btn btn-sm btn-warn">↺ 重置积分</button>

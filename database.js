@@ -125,6 +125,8 @@ async function initDb(SqlLib) {
   )`);
   // 迁移：加冠军预测字段
   try { sqlDb.run('ALTER TABLE users ADD COLUMN predicted_champion TEXT DEFAULT NULL'); } catch(e) {}
+  // 迁移：加Pin码字段（防止冒用他人账号）
+  try { sqlDb.run('ALTER TABLE users ADD COLUMN pin TEXT DEFAULT NULL'); } catch(e) {}
   // 迁移：淘汰队伍表
   sqlDb.run(`CREATE TABLE IF NOT EXISTS eliminated_teams (
     team TEXT PRIMARY KEY,

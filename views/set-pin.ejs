@@ -1,0 +1,30 @@
+<%- include('partials/header', {title}) %>
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-icon">🔒</div>
+    <h1 class="auth-title">设置Pin码</h1>
+    <p class="auth-sub">设置一个4位数字Pin码，以后登录需要输入，防止他人冒用你的账号查看预测</p>
+
+    <% if (error) { %>
+      <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <form method="POST" action="/set-pin">
+      <div class="form-group">
+        <label class="form-label">设置4位Pin码</label>
+        <input type="text" name="pin" class="form-input" inputmode="numeric" pattern="\d{4}"
+          maxlength="4" placeholder="如：1234" autofocus required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">再次输入确认</label>
+        <input type="text" name="pin2" class="form-input" inputmode="numeric" pattern="\d{4}"
+          maxlength="4" placeholder="再输入一次" required>
+      </div>
+      <div class="form-hint">⚠️ 请记住你的Pin码，遗忘后需联系管理员重置</div>
+      <button type="submit" class="btn btn-primary btn-block">确认设置</button>
+    </form>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
