@@ -12,7 +12,7 @@ const updateScores  = require('./scripts/update-scores');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ODDS_UPDATE_INTERVAL = 3 * 60 * 60 * 1000; // 3小时更新一次
+const ODDS_UPDATE_INTERVAL = 2 * 24 * 60 * 60 * 1000; // 每2天更新一次，节省API额度
 
 // SSE 广播
 const sseClients = new Set();
@@ -181,12 +181,12 @@ initSqlJs().then(async SQL => {
     console.log(`\n⚽ 世界杯竞猜系统已启动！`);
     console.log(`🌐 本地地址: http://localhost:${PORT}`);
     console.log(`🔑 管理员密码: ${process.env.ADMIN_PASSWORD || 'admin2026'}`);
-    console.log(`🔄 盘口更新: ${process.env.ODDS_API_KEY ? '每小时自动更新' : '未配置 ODDS_API_KEY'}\n`);
+    console.log(`🔄 盘口更新: ${process.env.ODDS_API_KEY ? '每2天自动更新（已投票场次锁定不变）' : '未配置 ODDS_API_KEY'}\n`);
 
     await importMatches();
     await updateOdds();
     await updateScores();
-    // 每3小时更新盘口；每小时检查赛果并自动结算（兜底）
+    // 每2天更新盘口（节省API额度）；每小时检查赛果并自动结算（兜底）
     setInterval(updateOdds,   ODDS_UPDATE_INTERVAL);
     setInterval(updateScores, 60 * 60 * 1000);
 
