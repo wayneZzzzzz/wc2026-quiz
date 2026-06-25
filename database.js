@@ -145,6 +145,8 @@ async function initDb(SqlLib) {
   // 迁移：加比分字段（必须在 CREATE TABLE 之后，ALTER TABLE 对新建表无意义但无害）
   try { sqlDb.run('ALTER TABLE matches ADD COLUMN home_score INTEGER'); } catch(e) {}
   try { sqlDb.run('ALTER TABLE matches ADD COLUMN away_score INTEGER'); } catch(e) {}
+  // 迁移：盘口手动调整标记（手动调整过的盘口，自动抓取不再覆盖）
+  try { sqlDb.run('ALTER TABLE matches ADD COLUMN manual_odds INTEGER DEFAULT 0'); } catch(e) {}
   // 迁移：修正比赛时间（所有 UPDATE 必须在 CREATE TABLE 之后，否则空库启动时会 crash）
   // 苏格兰vs摩洛哥（原19:00 UTC有误，应为22:00 UTC）
   sqlDb.run(`UPDATE matches SET match_time='2026-06-19 22:00' WHERE home_team='苏格兰' AND away_team='摩洛哥' AND match_time='2026-06-19 19:00'`);

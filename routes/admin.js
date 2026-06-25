@@ -94,6 +94,30 @@ module.exports = function(db) {
     res.redirect('/admin');
   });
 
+  // ===== 手动调整盘口（与自动抓取冲突时，手动为准）=====
+  router.get('/matches/:id/odds', requireAdmin, (req, res) => {
+    const match = db.prepare('SELECT * FROM matches WHERE id=?').get(req.params.id);
+    if (!match) return res.redirect('/admin');
+    res.render('admin/adjust-odds', { title: '手动调整盘口', match, error: null });
+  });
+
+  router.post('/matches/:id/odds', requireAdmin, (req, res) => {
+    const match = db.prepare('SELECT * FROM matches WHERE id=?').get(req.params.id);
+    if (!match) return res.redirect('/admin');
+
+    if (req.body.unlock) {
+      db.prepare('UPDATE matches SET manual_odds=0 WHERE id=?').run(req.params.id);
+      return res.redirect('/admin');
+    }
+
+    const { handicap_desc, option_a, option_b, option_c } = req.body;
+    db.prepare(`
+      UPDATE matches SET handicap_desc=?, option_a=?, option_b=?, option_c=?, manual_odds=1
+      WHERE id=?
+    `).run(handicap_desc, option_a, option_b, option_c, req.params.id);
+    res.redirect('/admin');
+  });
+
   router.post('/matches/:id/status', requireAdmin, (req, res) => {
     const { status } = req.body;
     const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(req.params.id);

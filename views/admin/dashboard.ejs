@@ -54,6 +54,7 @@
                 <div class="amr-teams"><%= m.home_team %> vs <%= m.away_team %></div>
                 <div class="amr-meta">
                   <span class="handicap-tag"><%= m.handicap_desc %></span>
+                  <% if (m.manual_odds) { %><span class="badge-voting" title="自动抓取盘口不会覆盖">✋ 手动锁定</span><% } %>
                   <span><%= m.stage %></span>
                   <span><%= new Date(m.match_time).toLocaleString('zh-CN', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Shanghai'}) %></span>
                   <span class="status-badge-<%= m.status %>">
@@ -69,6 +70,7 @@
               <div class="amr-actions">
                 <% if (m.status !== 'finished') { %>
                   <a href="/admin/matches/<%= m.id %>/edit" class="btn btn-sm btn-outline">编辑</a>
+                  <a href="/admin/matches/<%= m.id %>/odds" class="btn btn-sm btn-outline">🎯 调整盘口</a>
                   <% if (m.status === 'upcoming') { %>
                     <form method="POST" action="/admin/matches/<%= m.id %>/status" style="display:inline">
                       <input type="hidden" name="status" value="voting">

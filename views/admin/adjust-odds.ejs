@@ -1,0 +1,57 @@
+<%- include('../partials/header', {title}) %>
+
+<div class="container container-narrow">
+  <a href="/admin" class="back-link">← 返回后台</a>
+  <div class="page-header">
+    <h1>🎯 手动调整盘口</h1>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+  <% } %>
+
+  <div class="card">
+    <p style="margin-bottom:1rem;color:#6b7280;font-size:.9rem">
+      <%= match.home_team %> vs <%= match.away_team %>
+      <% if (match.manual_odds) { %>
+        <span class="badge-voting" style="margin-left:.5rem">✋ 已手动锁定，自动抓取不会覆盖</span>
+      <% } %>
+    </p>
+
+    <form method="POST" action="/admin/matches/<%= match.id %>/odds">
+      <div class="form-group">
+        <label class="form-label">盘口说明</label>
+        <input type="text" name="handicap_desc" class="form-input" placeholder="例：巴西让0.5球" value="<%= match.handicap_desc || '' %>" required>
+      </div>
+
+      <div class="form-row form-row-3">
+        <div class="form-group">
+          <label class="form-label">选项 A</label>
+          <input type="text" name="option_a" class="form-input" value="<%= match.option_a || '' %>" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">选项 B</label>
+          <input type="text" name="option_b" class="form-input" value="<%= match.option_b || '' %>" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">选项 C</label>
+          <input type="text" name="option_c" class="form-input" value="<%= match.option_c || '' %>" required>
+        </div>
+      </div>
+
+      <div class="form-hint" style="margin-bottom:1rem">
+        保存后该场比赛会标记为「手动调整」，之后自动抓取盘口时会跳过此场，以本次手动设置为准。
+      </div>
+
+      <div class="form-actions">
+        <a href="/admin" class="btn btn-outline">取消</a>
+        <% if (match.manual_odds) { %>
+          <button type="submit" name="unlock" value="1" class="btn btn-warn" formnovalidate>解除锁定（恢复自动抓取）</button>
+        <% } %>
+        <button type="submit" class="btn btn-primary">保存并锁定</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

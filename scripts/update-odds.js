@@ -151,6 +151,13 @@ async function updateOdds() {
       continue;
     }
 
+    // 管理员手动调整过的盘口，自动抓取不再覆盖（手动为准）
+    if (match.manual_odds) {
+      console.log(`  ✋ ${homeZh} vs ${awayZh} 盘口已被管理员手动调整，跳过自动更新`);
+      skipped++;
+      continue;
+    }
+
     // 找 spreads 盘口
     const bm = event.bookmakers?.find(b => b.markets?.some(m => m.key === 'spreads'));
     if (!bm) { skipped++; continue; }
