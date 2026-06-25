@@ -7,12 +7,10 @@ const getDb = require('./lib/init-db');
 const { FLAGS, OPTION_TIPS, fmtBJ, fmtET, resolveLabel } = require('./lib/helpers');
 const ALL_TEAMS = Object.keys(FLAGS); // 48支参赛队
 const importMatches = require('./scripts/import-matches');
-const updateOdds    = require('./scripts/update-odds');
 const updateScores  = require('./scripts/update-scores');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ODDS_UPDATE_INTERVAL = 2 * 24 * 60 * 60 * 1000; // 每2天更新一次，节省API额度
 
 // SSE 广播
 const sseClients = new Set();
@@ -211,13 +209,11 @@ initSqlJs().then(async SQL => {
     console.log(`\n⚽ 世界杯竞猜系统已启动！`);
     console.log(`🌐 本地地址: http://localhost:${PORT}`);
     console.log(`🔑 管理员密码: ${process.env.ADMIN_PASSWORD || 'admin2026'}`);
-    console.log(`🔄 盘口更新: ${process.env.ODDS_API_KEY ? '每2天自动更新（已投票场次锁定不变）' : '未配置 ODDS_API_KEY'}\n`);
+    console.log(`🔄 盘口更新: 已停用后台自动刷新，仅支持管理员后台手动刷新（节省API额度）\n`);
 
     await importMatches();
-    await updateOdds();
     await updateScores();
-    // 每2天更新盘口（节省API额度）；每小时检查赛果并自动结算（兜底）
-    setInterval(updateOdds,   ODDS_UPDATE_INTERVAL);
+    // 盘口刷新改为纯手动（管理员后台"📡 刷新盘口"按钮触发），不再自动定时拉取
     setInterval(updateScores, 60 * 60 * 1000);
 
     // 比赛结束后尽快抓取赛果：预估比赛耗时135分钟后开始检查，
