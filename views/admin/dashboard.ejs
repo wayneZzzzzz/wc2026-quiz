@@ -120,6 +120,7 @@
                   · <%= u.wins %>胜 · <%= u.total_votes %>场
                   · <strong><%= u.total_votes > 0 ? (u.wins/u.total_votes*100).toFixed(1) : '0.0' %>%</strong>胜率
                   · Pin码：<% if (u.pin) { %><strong><%= u.pin %></strong><% } else { %><span style="color:#9ca3af">未设置</span><% } %>
+                  · 虚拟投票剩余：<strong style="color:<%= u.virtual_votes_left > 0 ? '#dc2626' : '#9ca3af' %>"><%= u.virtual_votes_left %>/6</strong>
                 </span>
               </div>
               <div class="user-row-actions">
@@ -135,6 +136,12 @@
                     <form method="POST" action="/admin/users/<%= u.id %>/reset-pin" style="display:inline"
                           onsubmit="return confirm('确认重置「<%= u.nickname %>」的Pin码？重置后该用户下次登录需重新设置。')">
                       <button class="btn btn-sm btn-outline">🔑 重置Pin码</button>
+                    </form>
+                  <% } %>
+                  <% if (u.virtual_votes_left < 6) { %>
+                    <form method="POST" action="/admin/users/<%= u.id %>/reset-virtual" style="display:inline"
+                          onsubmit="return confirm('确认将「<%= u.nickname %>」的虚拟投票次数恢复为6次？')">
+                      <button class="btn btn-sm btn-outline">🔴 重置虚拟投票</button>
                     </form>
                   <% } %>
                   <form method="POST" action="/admin/users/<%= u.id %>/reset-points" style="display:inline"

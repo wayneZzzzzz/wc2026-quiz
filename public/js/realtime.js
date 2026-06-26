@@ -42,7 +42,7 @@ source.addEventListener('vote', e => {
   if (!voterList) return;
 
   const groups = { a: [], b: [], c: [] };
-  votes.forEach(v => groups[v.choice].push(v.nickname));
+  votes.forEach(v => groups[v.choice].push(v));
 
   ['a','b','c'].forEach(k => {
     let grp = voterList.querySelector(`.voter-group[data-opt="${k}"]`);
@@ -64,7 +64,9 @@ source.addEventListener('vote', e => {
     }
     grp.querySelector('.group-cnt').textContent = groups[k].length;
     const chips = grp.querySelector('.voter-chips');
-    chips.innerHTML = groups[k].map(n => `<span class="voter-chip">${n}</span>`).join('');
+    chips.innerHTML = groups[k].map(v =>
+      `<span class="voter-chip${v.is_virtual ? ' voter-chip-virtual' : ''}">${v.nickname}${v.is_virtual ? ' 🔴虚拟' : ''}</span>`
+    ).join('');
   });
 
   // 闪烁提示有新投票

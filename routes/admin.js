@@ -362,6 +362,12 @@ module.exports = function(db) {
     res.redirect('/admin');
   });
 
+  // ===== 重置用户虚拟投票次数为6次 =====
+  router.post('/users/:id/reset-virtual', requireAdmin, (req, res) => {
+    db.prepare('UPDATE users SET virtual_votes_left=6 WHERE id=?').run(req.params.id);
+    res.redirect('/admin');
+  });
+
   // 清空所有测试数据（保留比赛和盘口）
   router.post('/reset-all', requireAdmin, (req, res) => {
     db.transaction(() => {

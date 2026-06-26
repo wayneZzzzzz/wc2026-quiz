@@ -59,14 +59,18 @@
         </div>
       <% } else if (myVote) { %>
         <div class="voted-banner">
-          <div class="voted-label">✅ 你已投票</div>
+          <div class="voted-label"><%= myVote.is_virtual ? '🔴 你使用了虚拟投票' : '✅ 你已投票' %></div>
           <div class="voted-choice">你选择了：<strong><%= rl(myVote.choice==='a'?match.option_a:myVote.choice==='b'?match.option_b:match.option_c, match) %></strong></div>
+          <% if (myVote.is_virtual) { %>
+            <div class="vote-hint">本场不计入积分结算</div>
+          <% } %>
         </div>
       <% } else { %>
         <h2 class="vote-title">你的预测是？</h2>
         <p class="vote-subtitle">盘口：<strong><%= match.handicap_desc %></strong></p>
         <form method="POST" action="/votes" id="vote-form">
           <input type="hidden" name="match_id" value="<%= match.id %>">
+          <input type="hidden" name="virtual" id="virtual-input" value="0">
           <div class="vote-options">
             <% [['a', match.option_a], ['b', match.option_b], ['c', match.option_c]].forEach(([k, rawLabel]) => {
                const label = rl(rawLabel, match); %>
@@ -80,6 +84,16 @@
               </label>
             <% }) %>
           </div>
+
+          <% if (virtualVotesLeft > 0) { %>
+            <label class="virtual-vote-toggle">
+              <input type="checkbox" id="virtual-checkbox" onchange="document.getElementById('virtual-input').value = this.checked ? '1' : '0'">
+              <span>🔴 不想猜这场？使用虚拟投票（仅记录选项，不计入积分结算，剩余 <strong><%= virtualVotesLeft %></strong>/6 次）</span>
+            </label>
+          <% } else { %>
+            <div class="vote-hint" style="margin-bottom:.75rem">虚拟投票次数已用完（每人共 6 次）</div>
+          <% } %>
+
           <button type="submit" id="submit-btn" class="btn btn-primary btn-block btn-lg" disabled>
             请先选择一个选项
           </button>

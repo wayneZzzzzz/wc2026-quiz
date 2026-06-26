@@ -113,9 +113,15 @@ module.exports = function(db) {
     if (user && effectiveStatus === 'finished')
       myLog = db.prepare('SELECT * FROM point_logs WHERE user_id=? AND match_id=?').get(user.id, match.id);
 
+    let virtualVotesLeft = 0;
+    if (user) {
+      const me = db.prepare('SELECT virtual_votes_left FROM users WHERE id=?').get(user.id);
+      virtualVotesLeft = me ? me.virtual_votes_left : 0;
+    }
+
     res.render('match', {
       title: `${match.home_team} vs ${match.away_team}`,
-      match, effectiveStatus, myVote, allVotes, voteCounts, myLog
+      match, effectiveStatus, myVote, allVotes, voteCounts, myLog, virtualVotesLeft
     });
   });
 

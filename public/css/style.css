@@ -313,6 +313,12 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: 4px;
 }
 .vote-hint { text-align: center; font-size: .8rem; color: #9ca3af; margin-top: .75rem; }
+.virtual-vote-toggle {
+  display: flex; align-items: flex-start; gap: .5rem; padding: .75rem 1rem;
+  background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px;
+  font-size: .82rem; color: #991b1b; margin: 1rem 0; cursor: pointer;
+}
+.virtual-vote-toggle input { margin-top: .15rem; flex-shrink: 0; }
 
 /* ===== Info Box ===== */
 .info-box {
@@ -351,6 +357,7 @@ a { color: inherit; text-decoration: none; }
 }
 .chip-win { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; font-weight: 600; }
 .chip-lose { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+.voter-chip-virtual { background: #fef2f2; color: #dc2626; border-color: #fca5a5; font-weight: 700; }
 
 /* ===== Leaderboard Full ===== */
 .lb-tabs { display: flex; gap: .5rem; margin-bottom: 1.5rem; }

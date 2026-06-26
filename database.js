@@ -127,6 +127,8 @@ async function initDb(SqlLib) {
   try { sqlDb.run('ALTER TABLE users ADD COLUMN predicted_champion TEXT DEFAULT NULL'); } catch(e) {}
   // 迁移：加Pin码字段（防止冒用他人账号）
   try { sqlDb.run('ALTER TABLE users ADD COLUMN pin TEXT DEFAULT NULL'); } catch(e) {}
+  // 迁移：虚拟投票次数（每人总共6次，不想选某场时使用，不计入积分结算）
+  try { sqlDb.run('ALTER TABLE users ADD COLUMN virtual_votes_left INTEGER DEFAULT 6'); } catch(e) {}
   // 迁移：淘汰队伍表
   sqlDb.run(`CREATE TABLE IF NOT EXISTS eliminated_teams (
     team TEXT PRIMARY KEY,
@@ -199,6 +201,8 @@ async function initDb(SqlLib) {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, match_id)
   )`);
+  // 迁移：虚拟投票标记（只记录选项，不参与积分结算）
+  try { sqlDb.run('ALTER TABLE votes ADD COLUMN is_virtual INTEGER DEFAULT 0'); } catch(e) {}
   sqlDb.run(`CREATE TABLE IF NOT EXISTS point_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL, match_id INTEGER NOT NULL,

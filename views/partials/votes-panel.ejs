@@ -37,8 +37,8 @@
             </div>
             <div class="voter-chips">
               <% groups[opt.key].forEach(v => { %>
-                <span class="voter-chip <%= effectiveStatus==='finished' ? (match.result===opt.key ? 'chip-win' : 'chip-lose') : '' %>">
-                  <%= v.nickname %>
+                <span class="voter-chip <%= v.is_virtual ? 'voter-chip-virtual' : (effectiveStatus==='finished' ? (match.result===opt.key ? 'chip-win' : 'chip-lose') : '') %>">
+                  <%= v.nickname %><% if (v.is_virtual) { %> 🔴虚拟<% } %>
                 </span>
               <% }) %>
             </div>
