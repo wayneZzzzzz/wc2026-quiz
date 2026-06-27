@@ -194,6 +194,38 @@ async function initDb(SqlLib) {
   sqlDb.run(`UPDATE matches SET match_time='2026-06-27 21:00' WHERE home_team='克罗地亚' AND away_team='加纳' AND match_time='2026-06-27 22:00'`);
   sqlDb.run(`UPDATE matches SET match_time='2026-06-27 21:00' WHERE home_team='巴拿马' AND away_team='英格兰' AND match_time='2026-06-27 22:00'`);
 
+  // 迁移：导入已确定的32强赛对阵及盘口（仅对已有数据的现有库追加，全新空库由 importMatches() 统一处理，避免误判"已有数据"跳过小组赛导入）
+  const existingMatchCount = sqlDb.exec('SELECT COUNT(*) as n FROM matches');
+  const hasExistingMatches = existingMatchCount.length > 0 && existingMatchCount[0].values[0][0] > 0;
+  const ROUND_OF_32_SEED = hasExistingMatches ? [
+    { home:'南非', away:'加拿大', time:'2026-06-28 19:00',
+      desc:'加拿大让0.5球', a:'加拿大赢球', b:'平局', c:'南非赢球' },
+    { home:'巴西', away:'日本', time:'2026-06-29 17:00',
+      desc:'巴西让0.5球', a:'巴西赢球', b:'平局', c:'日本赢球' },
+    { home:'德国', away:'巴拉圭', time:'2026-06-29 20:30',
+      desc:'德国让1.5球', a:'德国赢2球及以上', b:'德国赢1球', c:'平局或巴拉圭赢球' },
+    { home:'荷兰', away:'摩洛哥', time:'2026-06-30 01:00',
+      desc:'荷兰让0.5球', a:'荷兰赢球', b:'平局', c:'摩洛哥赢球' },
+    { home:'科特迪瓦', away:'挪威', time:'2026-06-30 17:00',
+      desc:'挪威让0.5球', a:'挪威赢球', b:'平局', c:'科特迪瓦赢球' },
+    { home:'法国', away:'瑞典', time:'2026-06-30 21:00',
+      desc:'法国让1.5球', a:'法国赢2球及以上', b:'法国赢1球', c:'平局或瑞典赢球' },
+    { home:'美国', away:'波黑', time:'2026-07-02 00:00',
+      desc:'美国让1.5球', a:'美国赢2球及以上', b:'美国赢1球', c:'平局或波黑赢球' },
+    { home:'阿根廷', away:'佛得角', time:'2026-07-03 22:00',
+      desc:'阿根廷让2球', a:'阿根廷赢3球及以上', b:'阿根廷赢2球', c:'阿根廷赢1球以内、平局或佛得角赢球' },
+  ] : [];
+  for (const m of ROUND_OF_32_SEED) {
+    const exists = sqlDb.exec(`SELECT id FROM matches WHERE home_team='${m.home}' AND away_team='${m.away}' AND stage='32强'`);
+    if (exists.length === 0 || exists[0].values.length === 0) {
+      sqlDb.run(
+        `INSERT INTO matches (home_team, away_team, match_time, stage, handicap_desc, option_a, option_b, option_c, status)
+         VALUES (?, ?, ?, '32强', ?, ?, ?, ?, 'upcoming')`,
+        [m.home, m.away, m.time, m.desc, m.a, m.b, m.c]
+      );
+    }
+  }
+
   sqlDb.run(`CREATE TABLE IF NOT EXISTS votes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL, match_id INTEGER NOT NULL,
