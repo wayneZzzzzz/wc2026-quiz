@@ -122,6 +122,22 @@ const ROUND_OF_32 = [
     handicap_desc:'美国让1.5球', option_a:'美国赢2球及以上', option_b:'美国赢1球', option_c:'平局或波黑赢球' },
   { home:'阿根廷', away:'佛得角', time:'2026-07-03 22:00', stage:'32强',
     handicap_desc:'阿根廷让2球', option_a:'阿根廷赢3球及以上', option_b:'阿根廷赢2球', option_c:'阿根廷赢1球以内、平局或佛得角赢球' },
+  { home:'墨西哥', away:'厄瓜多尔', time:'2026-07-01 01:00', stage:'32强',
+    handicap_desc:'墨西哥让0.5球', option_a:'墨西哥赢球', option_b:'平局', option_c:'厄瓜多尔赢球' },
+  { home:'英格兰', away:'刚果', time:'2026-07-01 16:00', stage:'32强',
+    handicap_desc:'英格兰让1.5球', option_a:'英格兰赢2球及以上', option_b:'英格兰赢1球', option_c:'平局或刚果赢球' },
+  { home:'比利时', away:'塞内加尔', time:'2026-07-01 20:00', stage:'32强',
+    handicap_desc:'比利时让0.5球', option_a:'比利时赢球', option_b:'平局', option_c:'塞内加尔赢球' },
+  { home:'西班牙', away:'奥地利', time:'2026-07-02 19:00', stage:'32强',
+    handicap_desc:'西班牙让1.5球', option_a:'西班牙赢2球及以上', option_b:'西班牙赢1球', option_c:'平局或奥地利赢球' },
+  { home:'葡萄牙', away:'克罗地亚', time:'2026-07-02 23:00', stage:'32强',
+    handicap_desc:'葡萄牙让0.5球', option_a:'葡萄牙赢球', option_b:'平局', option_c:'克罗地亚赢球' },
+  { home:'瑞士', away:'阿尔及利亚', time:'2026-07-03 03:00', stage:'32强',
+    handicap_desc:'瑞士让0.5球', option_a:'瑞士赢球', option_b:'平局', option_c:'阿尔及利亚赢球' },
+  { home:'澳大利亚', away:'埃及', time:'2026-07-03 18:00', stage:'32强',
+    handicap_desc:'平手盘', option_a:'澳大利亚赢球', option_b:'平局', option_c:'埃及赢球' },
+  { home:'哥伦比亚', away:'加纳', time:'2026-07-04 01:30', stage:'32强',
+    handicap_desc:'哥伦比亚让1球', option_a:'哥伦比亚赢2球及以上', option_b:'哥伦比亚赢1球', option_c:'平局或加纳赢球' },
 ];
 
 // 初始盘口估算（根据球队实力，API 会覆盖真实数据）
