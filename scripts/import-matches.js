@@ -140,6 +140,22 @@ const ROUND_OF_32 = [
     handicap_desc:'哥伦比亚让1球', option_a:'哥伦比亚赢2球及以上', option_b:'哥伦比亚赢1球', option_c:'平局或加纳赢球' },
 ];
 
+// 16强赛（已确定对阵，盘口已根据 The Odds API 实时数据计算）
+const ROUND_OF_16 = [
+  { home:'加拿大', away:'摩洛哥', time:'2026-07-04 17:00', stage:'16强',
+    handicap_desc:'平手盘', option_a:'加拿大赢球', option_b:'平局', option_c:'摩洛哥赢球' },
+  { home:'巴拉圭', away:'法国', time:'2026-07-04 21:00', stage:'16强',
+    handicap_desc:'法国让1.5球', option_a:'法国赢2球及以上', option_b:'法国赢1球', option_c:'平局或巴拉圭赢球' },
+  { home:'巴西', away:'挪威', time:'2026-07-05 20:00', stage:'16强',
+    handicap_desc:'巴西让0.5球', option_a:'巴西赢球', option_b:'平局', option_c:'挪威赢球' },
+  { home:'墨西哥', away:'英格兰', time:'2026-07-06 00:00', stage:'16强',
+    handicap_desc:'平手盘', option_a:'墨西哥赢球', option_b:'平局', option_c:'英格兰赢球' },
+  { home:'葡萄牙', away:'西班牙', time:'2026-07-06 19:00', stage:'16强',
+    handicap_desc:'平手盘', option_a:'葡萄牙赢球', option_b:'平局', option_c:'西班牙赢球' },
+  { home:'美国', away:'比利时', time:'2026-07-07 00:00', stage:'16强',
+    handicap_desc:'平手盘', option_a:'美国赢球', option_b:'平局', option_c:'比利时赢球' },
+];
+
 // 初始盘口估算（根据球队实力，API 会覆盖真实数据）
 function estimateHandicap(home, away) {
   const strong = ['巴西','法国','阿根廷','德国','英格兰','西班牙','葡萄牙','荷兰','比利时'];
@@ -187,7 +203,7 @@ async function importMatches() {
     `).run(m.home, m.away, m.time, m.stage, h.desc, h.a, h.b, h.c);
     imported++;
   }
-  for (const m of ROUND_OF_32) {
+  for (const m of [...ROUND_OF_32, ...ROUND_OF_16]) {
     db.prepare(`
       INSERT INTO matches (home_team, away_team, match_time, stage, handicap_desc, option_a, option_b, option_c, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')
@@ -200,6 +216,7 @@ async function importMatches() {
 
 module.exports = importMatches;
 module.exports.ROUND_OF_32 = ROUND_OF_32;
+module.exports.ROUND_OF_16 = ROUND_OF_16;
 
 // 独立运行支持
 if (require.main === module) {

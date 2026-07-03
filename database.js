@@ -242,6 +242,32 @@ async function initDb(SqlLib) {
     }
   }
 
+  // 迁移：导入已确定的16强赛对阵及盘口（同样仅对已有数据的现有库追加）
+  const ROUND_OF_16_SEED = hasExistingMatches ? [
+    { home:'加拿大', away:'摩洛哥', time:'2026-07-04 17:00',
+      desc:'平手盘', a:'加拿大赢球', b:'平局', c:'摩洛哥赢球' },
+    { home:'巴拉圭', away:'法国', time:'2026-07-04 21:00',
+      desc:'法国让1.5球', a:'法国赢2球及以上', b:'法国赢1球', c:'平局或巴拉圭赢球' },
+    { home:'巴西', away:'挪威', time:'2026-07-05 20:00',
+      desc:'巴西让0.5球', a:'巴西赢球', b:'平局', c:'挪威赢球' },
+    { home:'墨西哥', away:'英格兰', time:'2026-07-06 00:00',
+      desc:'平手盘', a:'墨西哥赢球', b:'平局', c:'英格兰赢球' },
+    { home:'葡萄牙', away:'西班牙', time:'2026-07-06 19:00',
+      desc:'平手盘', a:'葡萄牙赢球', b:'平局', c:'西班牙赢球' },
+    { home:'美国', away:'比利时', time:'2026-07-07 00:00',
+      desc:'平手盘', a:'美国赢球', b:'平局', c:'比利时赢球' },
+  ] : [];
+  for (const m of ROUND_OF_16_SEED) {
+    const exists = sqlDb.exec(`SELECT id FROM matches WHERE home_team='${m.home}' AND away_team='${m.away}' AND stage='16强'`);
+    if (exists.length === 0 || exists[0].values.length === 0) {
+      sqlDb.run(
+        `INSERT INTO matches (home_team, away_team, match_time, stage, handicap_desc, option_a, option_b, option_c, status)
+         VALUES (?, ?, ?, '16强', ?, ?, ?, ?, 'upcoming')`,
+        [m.home, m.away, m.time, m.desc, m.a, m.b, m.c]
+      );
+    }
+  }
+
   sqlDb.run(`CREATE TABLE IF NOT EXISTS votes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL, match_id INTEGER NOT NULL,

@@ -189,7 +189,11 @@ async function updateOdds() {
       ? ` (原${rawAbs}球→${cleanAbs}球，赔率${giverPrice.toFixed(2)})`
       : '';
 
-    const info = buildHandicapInfo(giverTeam, receiverTeam, cleanAbs);
+    // 取整后为0（平手盘）时，determineResult() 结算逻辑固定按主队作为 A 方判断，
+    // 因此这里必须强制以主队为 giverTeam，避免让球方是客队时描述与结算逻辑不一致
+    const info = cleanAbs === 0
+      ? buildHandicapInfo(homeZh, awayZh, 0)
+      : buildHandicapInfo(giverTeam, receiverTeam, cleanAbs);
 
     db.prepare(
       `UPDATE matches SET handicap_desc=?, option_a=?, option_b=?, option_c=? WHERE id=?`
