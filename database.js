@@ -256,6 +256,10 @@ async function initDb(SqlLib) {
       desc:'平手盘', a:'葡萄牙赢球', b:'平局', c:'西班牙赢球' },
     { home:'美国', away:'比利时', time:'2026-07-07 00:00',
       desc:'平手盘', a:'美国赢球', b:'平局', c:'比利时赢球' },
+    { home:'阿根廷', away:'埃及', time:'2026-07-07 16:00',
+      desc:'阿根廷让1.5球', a:'阿根廷赢2球及以上', b:'阿根廷赢1球', c:'平局或埃及赢球' },
+    { home:'瑞士', away:'哥伦比亚', time:'2026-07-07 20:00',
+      desc:'哥伦比亚让0.5球', a:'哥伦比亚赢球', b:'平局', c:'瑞士赢球' },
   ] : [];
   for (const m of ROUND_OF_16_SEED) {
     const exists = sqlDb.exec(`SELECT id FROM matches WHERE home_team='${m.home}' AND away_team='${m.away}' AND stage='16强'`);
@@ -263,6 +267,24 @@ async function initDb(SqlLib) {
       sqlDb.run(
         `INSERT INTO matches (home_team, away_team, match_time, stage, handicap_desc, option_a, option_b, option_c, status)
          VALUES (?, ?, ?, '16强', ?, ?, ?, ?, 'upcoming')`,
+        [m.home, m.away, m.time, m.desc, m.a, m.b, m.c]
+      );
+    }
+  }
+
+  // 迁移：导入已确定的八强赛对阵及盘口
+  const QUARTER_FINAL_SEED = hasExistingMatches ? [
+    { home:'法国', away:'摩洛哥', time:'2026-07-09 20:00',
+      desc:'法国让0.5球', a:'法国赢球', b:'平局', c:'摩洛哥赢球' },
+    { home:'挪威', away:'英格兰', time:'2026-07-11 21:00',
+      desc:'英格兰让0.5球', a:'英格兰赢球', b:'平局', c:'挪威赢球' },
+  ] : [];
+  for (const m of QUARTER_FINAL_SEED) {
+    const exists = sqlDb.exec(`SELECT id FROM matches WHERE home_team='${m.home}' AND away_team='${m.away}' AND stage='八强'`);
+    if (exists.length === 0 || exists[0].values.length === 0) {
+      sqlDb.run(
+        `INSERT INTO matches (home_team, away_team, match_time, stage, handicap_desc, option_a, option_b, option_c, status)
+         VALUES (?, ?, ?, '八强', ?, ?, ?, ?, 'upcoming')`,
         [m.home, m.away, m.time, m.desc, m.a, m.b, m.c]
       );
     }

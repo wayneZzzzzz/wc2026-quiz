@@ -154,6 +154,18 @@ const ROUND_OF_16 = [
     handicap_desc:'平手盘', option_a:'葡萄牙赢球', option_b:'平局', option_c:'西班牙赢球' },
   { home:'美国', away:'比利时', time:'2026-07-07 00:00', stage:'16强',
     handicap_desc:'平手盘', option_a:'美国赢球', option_b:'平局', option_c:'比利时赢球' },
+  { home:'阿根廷', away:'埃及', time:'2026-07-07 16:00', stage:'16强',
+    handicap_desc:'阿根廷让1.5球', option_a:'阿根廷赢2球及以上', option_b:'阿根廷赢1球', option_c:'平局或埃及赢球' },
+  { home:'瑞士', away:'哥伦比亚', time:'2026-07-07 20:00', stage:'16强',
+    handicap_desc:'哥伦比亚让0.5球', option_a:'哥伦比亚赢球', option_b:'平局', option_c:'瑞士赢球' },
+];
+
+// 八强赛（已确定对阵，盘口已根据 The Odds API 实时数据计算）
+const QUARTER_FINAL = [
+  { home:'法国', away:'摩洛哥', time:'2026-07-09 20:00', stage:'八强',
+    handicap_desc:'法国让0.5球', option_a:'法国赢球', option_b:'平局', option_c:'摩洛哥赢球' },
+  { home:'挪威', away:'英格兰', time:'2026-07-11 21:00', stage:'八强',
+    handicap_desc:'英格兰让0.5球', option_a:'英格兰赢球', option_b:'平局', option_c:'挪威赢球' },
 ];
 
 // 初始盘口估算（根据球队实力，API 会覆盖真实数据）
@@ -203,7 +215,7 @@ async function importMatches() {
     `).run(m.home, m.away, m.time, m.stage, h.desc, h.a, h.b, h.c);
     imported++;
   }
-  for (const m of [...ROUND_OF_32, ...ROUND_OF_16]) {
+  for (const m of [...ROUND_OF_32, ...ROUND_OF_16, ...QUARTER_FINAL]) {
     db.prepare(`
       INSERT INTO matches (home_team, away_team, match_time, stage, handicap_desc, option_a, option_b, option_c, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')
@@ -217,6 +229,7 @@ async function importMatches() {
 module.exports = importMatches;
 module.exports.ROUND_OF_32 = ROUND_OF_32;
 module.exports.ROUND_OF_16 = ROUND_OF_16;
+module.exports.QUARTER_FINAL = QUARTER_FINAL;
 
 // 独立运行支持
 if (require.main === module) {
