@@ -1,0 +1,48 @@
+<%- include('../partials/header', {title}) %>
+
+<div class="container">
+  <a href="/admin" class="back-link">← 返回后台</a>
+  <div class="page-header">
+    <h1>🎯 冷门值统计</h1>
+  </div>
+
+  <div class="info-box" style="margin-bottom:1.5rem">
+    <p>每场比赛，用户选择的选项在全体投票者中被多少人选中，把这个人数累加到该用户名下。
+    <strong>总和越低</strong>，说明这个人越倾向于选择少数人选的冷门选项；总和越高，说明越倾向随大流。</p>
+  </div>
+
+  <% if (stats.length === 0) { %>
+    <div class="empty-state">暂无投票数据</div>
+  <% } else { %>
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>排名</th>
+          <th>昵称</th>
+          <th>参与场次</th>
+          <th>冷门值总和</th>
+          <th>场均冷门值</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% stats.forEach((s, i) => { %>
+          <tr class="<%= i < 3 ? 'top-row' : '' %>">
+            <td class="rank-cell">
+              <% if (i === 0) { %>🥇
+              <% } else if (i === 1) { %>🥈
+              <% } else if (i === 2) { %>🥉
+              <% } else { %><%= i+1 %>
+              <% } %>
+            </td>
+            <td class="name-cell"><%= s.nickname %></td>
+            <td><%= s.vote_count %></td>
+            <td><strong><%= s.total_crowd %></strong></td>
+            <td><%= s.avg_crowd %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

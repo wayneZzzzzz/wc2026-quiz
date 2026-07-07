@@ -67,6 +67,28 @@ module.exports = function(db) {
     res.render('admin/user-activity', { title: `${user.nickname} 的活动记录`, user, logins, votes, sameIpOthers });
   });
 
+  // ===== 冷门值统计：每个用户所有投票选项，在各自比赛中被选人数之和 =====
+  // 数值越低，说明该用户越倾向于选择少数人选的（冷门）选项
+  router.get('/stats/contrarian', requireAdmin, (req, res) => {
+    const rows = db.prepare(`
+      SELECT u.id, u.nickname, COUNT(*) as vote_count, SUM(oc.cnt) as total_crowd
+      FROM votes v
+      JOIN users u ON v.user_id = u.id
+      JOIN (
+        SELECT match_id, choice, COUNT(*) as cnt
+        FROM votes
+        GROUP BY match_id, choice
+      ) oc ON v.match_id = oc.match_id AND v.choice = oc.choice
+      GROUP BY u.id
+      ORDER BY total_crowd ASC
+    `).all();
+    const stats = rows.map(r => ({
+      ...r,
+      avg_crowd: r.vote_count > 0 ? (r.total_crowd / r.vote_count).toFixed(2) : '0.00',
+    }));
+    res.render('admin/stats-contrarian', { title: '冷门值统计', stats });
+  });
+
   // ===== 手动刷新无投票比赛的盘口数据 =====
   router.post('/refresh-odds', requireAdmin, async (req, res) => {
     try {
