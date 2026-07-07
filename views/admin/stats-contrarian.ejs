@@ -49,23 +49,43 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
 const STATS = <%- JSON.stringify(stats) %>;
+const avgValues = STATS.map(s => parseFloat(s.avg_crowd));
+const overallAvg = avgValues.reduce((a,b) => a+b, 0) / avgValues.length;
+
 new Chart(document.getElementById('contrarianChart').getContext('2d'), {
-  type: 'bar',
   data: {
     labels: STATS.map(s => s.nickname),
-    datasets: [{
-      label: '场均冷门值',
-      data: STATS.map(s => parseFloat(s.avg_crowd)),
-      backgroundColor: '#0F5499',
-      borderRadius: 4,
-      barPercentage: 0.5,
-      categoryPercentage: 0.6,
-    }]
+    datasets: [
+      {
+        type: 'bar',
+        label: '场均冷门值',
+        data: avgValues,
+        backgroundColor: '#0F5499',
+        borderRadius: 4,
+        barPercentage: 0.5,
+        categoryPercentage: 0.6,
+      },
+      {
+        type: 'line',
+        label: `均值 (${overallAvg.toFixed(2)})`,
+        data: STATS.map(() => overallAvg),
+        borderColor: '#C3120C',
+        borderWidth: 2,
+        borderDash: [6, 4],
+        pointRadius: 0,
+        fill: false,
+      },
+    ]
   },
   options: {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
+    plugins: {
+      legend: {
+        display: true,
+        labels: { filter: item => item.text.startsWith('均值'), font: { size: 11 } }
+      }
+    },
     scales: {
       x: { ticks: { font: { size: 11 }, color: '#666' }, grid: { display: false } },
       y: { min: 3.0, max: 5.5, ticks: { font: { size: 11 }, color: '#666' }, grid: { color: '#e8e8e8' } }
