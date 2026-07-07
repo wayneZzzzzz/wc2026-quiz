@@ -89,6 +89,40 @@ module.exports = function(db) {
     res.render('admin/stats-contrarian', { title: '冷门值统计', stats });
   });
 
+  // ===== 投票次序统计：每场比赛按投票时间排名，第一名10分/最后一名1分，中间线性插值 =====
+  // 数值越高，说明该用户越倾向于早投票；数值越低，说明越倾向于压哨/靠后投票
+  router.get('/stats/vote-order', requireAdmin, (req, res) => {
+    const votes = db.prepare(`
+      SELECT v.user_id, v.match_id, v.created_at, u.nickname
+      FROM votes v JOIN users u ON v.user_id = u.id
+      ORDER BY v.match_id ASC, v.created_at ASC
+    `).all();
+
+    // 按比赛分组，组内已按投票时间升序
+    const byMatch = {};
+    for (const v of votes) {
+      (byMatch[v.match_id] = byMatch[v.match_id] || []).push(v);
+    }
+
+    const userAgg = {}; // user_id -> { nickname, sum, count }
+    for (const matchId in byMatch) {
+      const group = byMatch[matchId];
+      const n = group.length;
+      group.forEach((v, i) => {
+        const score = n > 1 ? 10 - i * 9 / (n - 1) : 10;
+        if (!userAgg[v.user_id]) userAgg[v.user_id] = { nickname: v.nickname, sum: 0, count: 0 };
+        userAgg[v.user_id].sum += score;
+        userAgg[v.user_id].count += 1;
+      });
+    }
+
+    const stats = Object.values(userAgg)
+      .map(u => ({ nickname: u.nickname, vote_count: u.count, avg_order: (u.sum / u.count).toFixed(2) }))
+      .sort((a, b) => b.avg_order - a.avg_order);
+
+    res.render('admin/stats-vote-order', { title: '投票次序统计', stats });
+  });
+
   // ===== 手动刷新无投票比赛的盘口数据 =====
   router.post('/refresh-odds', requireAdmin, async (req, res) => {
     try {

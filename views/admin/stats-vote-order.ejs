@@ -1,0 +1,96 @@
+<%- include('../partials/header', {title}) %>
+
+<div class="container">
+  <a href="/admin" class="back-link">← 返回后台</a>
+  <div class="page-header">
+    <h1>⏱ 投票次序统计</h1>
+  </div>
+
+  <div class="info-box" style="margin-bottom:1.5rem">
+    <p>每场比赛按投票时间排名：第一个投票记 <strong>10分</strong>，最后一个投票记 <strong>1分</strong>，
+    中间按名次线性插值，再取每个用户在所有参与比赛中的平均分。
+    <strong>分数越高</strong>，说明该用户越倾向于早投票；<strong>分数越低</strong>，说明越倾向于压哨/靠后投票。</p>
+  </div>
+
+  <% if (stats.length === 0) { %>
+    <div class="empty-state">暂无投票数据</div>
+  <% } else { %>
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>排名</th>
+          <th>昵称</th>
+          <th>参与场次</th>
+          <th>平均投票次序分</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% stats.forEach((s, i) => { %>
+          <tr>
+            <td class="rank-cell"><%= i+1 %></td>
+            <td class="name-cell"><%= s.nickname %></td>
+            <td><%= s.vote_count %></td>
+            <td><strong><%= s.avg_order %></strong></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <div class="section" style="margin-top:1.5rem">
+      <h2 style="font-size:1rem;color:#374151;margin-bottom:.75rem">📊 平均投票次序分布</h2>
+      <div style="position:relative;height:400px">
+        <canvas id="voteOrderChart"></canvas>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+const STATS = <%- JSON.stringify(stats) %>;
+const avgValues = STATS.map(s => parseFloat(s.avg_order));
+const overallAvg = avgValues.reduce((a,b) => a+b, 0) / avgValues.length;
+
+new Chart(document.getElementById('voteOrderChart').getContext('2d'), {
+  data: {
+    labels: STATS.map(s => s.nickname),
+    datasets: [
+      {
+        type: 'bar',
+        label: '平均投票次序分',
+        data: avgValues,
+        backgroundColor: '#00994D',
+        borderRadius: 4,
+        barPercentage: 0.5,
+        categoryPercentage: 0.6,
+      },
+      {
+        type: 'line',
+        label: `均值 (${overallAvg.toFixed(2)})`,
+        data: STATS.map(() => overallAvg),
+        borderColor: '#C3120C',
+        borderWidth: 2,
+        borderDash: [6, 4],
+        pointRadius: 0,
+        fill: false,
+      },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+        labels: { filter: item => item.text.startsWith('均值'), font: { size: 11 } }
+      }
+    },
+    scales: {
+      x: { ticks: { font: { size: 11 }, color: '#666' }, grid: { display: false } },
+      y: { min: 1, max: 10, ticks: { font: { size: 11 }, color: '#666' }, grid: { color: '#e8e8e8' } }
+    }
+  }
+});
+</script>
+
+<%- include('../partials/footer') %>
