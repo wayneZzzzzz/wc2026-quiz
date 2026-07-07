@@ -53,6 +53,8 @@ module.exports = function(db) {
     const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || '';
     const ua = req.headers['user-agent'] || '';
     db.prepare('INSERT INTO login_logs (user_id, ip, user_agent) VALUES (?, ?, ?)').run(user.id, ip, ua);
+    // 防止 server.js 的活动节流中间件在紧接着的跳转请求上重复记录一条几乎同时的日志
+    req.session.lastActivityLoggedAt = Date.now();
 
     // 未设置Pin码 → 每次登录提醒设置；已设置 → 跳过
     if (!user.pin) {

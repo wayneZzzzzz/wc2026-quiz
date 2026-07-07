@@ -68,6 +68,24 @@ initSqlJs().then(async SQL => {
   const db = createWrapper();
   getDb.setDb(db);
 
+  // 已登录状态下每次访问页面（含仅凭 cookie 自动保持登录），也记录一次活动，
+  // 用同一会话10分钟节流，避免同一次访问的多个请求（页面+静态资源等）重复写入
+  app.use((req, res, next) => {
+    if (req.session.user) {
+      const now = Date.now();
+      const last = req.session.lastActivityLoggedAt || 0;
+      if (now - last > 10 * 60 * 1000) {
+        const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || '';
+        const ua = req.headers['user-agent'] || '';
+        try {
+          db.prepare('INSERT INTO login_logs (user_id, ip, user_agent) VALUES (?, ?, ?)').run(req.session.user.id, ip, ua);
+        } catch (e) {}
+        req.session.lastActivityLoggedAt = now;
+      }
+    }
+    next();
+  });
+
   app.use('/', require('./routes/auth')(db));
   app.use('/matches', require('./routes/matches')(db));
   app.use('/votes', require('./routes/votes')(db, broadcast));
