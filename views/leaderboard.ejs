@@ -36,7 +36,7 @@
               <% } %>
             </td>
             <td class="name-cell">
-              <%= u.nickname %><% if(u.predicted_champion){%><span class="champ-flag" title="预测冠军：<%= u.predicted_champion %>"><%= flag(u.predicted_champion) %></span><%}%>
+              <%= u.nickname %><% if(u.predicted_champion){%><span class="champ-flag <%= eliminated.includes(u.predicted_champion) ? 'champ-flag-eliminated' : '' %>" title="预测冠军：<%= u.predicted_champion %><%= eliminated.includes(u.predicted_champion) ? '（已淘汰）' : '' %>"><%= flag(u.predicted_champion) %></span><%}%>
               <% if (currentUser && u.id === currentUser.id) { %><span class="you-tag">你</span><% } %>
             </td>
             <td class="pts-cell <%= u.total_points > 0 ? 'positive' : u.total_points < 0 ? 'negative' : '' %>">
@@ -78,7 +78,7 @@
               <% } %>
             </td>
             <td class="name-cell">
-              <%= u.nickname %><% if(u.predicted_champion){%><span class="champ-flag" title="预测冠军：<%= u.predicted_champion %>"><%= flag(u.predicted_champion) %></span><%}%>
+              <%= u.nickname %><% if(u.predicted_champion){%><span class="champ-flag <%= eliminated.includes(u.predicted_champion) ? 'champ-flag-eliminated' : '' %>" title="预测冠军：<%= u.predicted_champion %><%= eliminated.includes(u.predicted_champion) ? '（已淘汰）' : '' %>"><%= flag(u.predicted_champion) %></span><%}%>
               <% if (currentUser && u.id === currentUser.id) { %><span class="you-tag">你</span><% } %>
             </td>
             <td><%= u.wins %></td>

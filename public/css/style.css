@@ -471,6 +471,7 @@ a { color: inherit; text-decoration: none; }
 
 /* Champ flag after nickname */
 .champ-flag { font-size:.9em; margin-left:.2rem; vertical-align:middle; }
+.champ-flag-eliminated { opacity:.35; filter:grayscale(80%); }
 
 /* Eliminated team management */
 .elim-grid { display:flex; flex-wrap:wrap; gap:.4rem; }

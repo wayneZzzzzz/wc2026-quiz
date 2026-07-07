@@ -278,6 +278,8 @@ async function initDb(SqlLib) {
       desc:'法国让0.5球', a:'法国赢球', b:'平局', c:'摩洛哥赢球' },
     { home:'挪威', away:'英格兰', time:'2026-07-11 21:00',
       desc:'英格兰让0.5球', a:'英格兰赢球', b:'平局', c:'挪威赢球' },
+    { home:'西班牙', away:'比利时', time:'2026-07-10 19:00',
+      desc:'西班牙让1球', a:'西班牙赢2球及以上', b:'西班牙赢1球', c:'平局或比利时赢球' },
   ] : [];
   for (const m of QUARTER_FINAL_SEED) {
     const exists = sqlDb.exec(`SELECT id FROM matches WHERE home_team='${m.home}' AND away_team='${m.away}' AND stage='八强'`);

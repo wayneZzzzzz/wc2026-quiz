@@ -166,6 +166,8 @@ const QUARTER_FINAL = [
     handicap_desc:'法国让0.5球', option_a:'法国赢球', option_b:'平局', option_c:'摩洛哥赢球' },
   { home:'挪威', away:'英格兰', time:'2026-07-11 21:00', stage:'八强',
     handicap_desc:'英格兰让0.5球', option_a:'英格兰赢球', option_b:'平局', option_c:'挪威赢球' },
+  { home:'西班牙', away:'比利时', time:'2026-07-10 19:00', stage:'八强',
+    handicap_desc:'西班牙让1球', option_a:'西班牙赢2球及以上', option_b:'西班牙赢1球', option_c:'平局或比利时赢球' },
 ];
 
 // 初始盘口估算（根据球队实力，API 会覆盖真实数据）

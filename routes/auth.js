@@ -19,7 +19,8 @@ module.exports = function(db) {
     const topUsers = db.prepare(
       `SELECT * FROM users ORDER BY total_points DESC, wins DESC`
     ).all();
-    res.render('index', { title: '世界杯竞猜', upcomingMatches, finishedMatches, topUsers });
+    const eliminated = db.prepare('SELECT team FROM eliminated_teams').all().map(r => r.team);
+    res.render('index', { title: '世界杯竞猜', upcomingMatches, finishedMatches, topUsers, eliminated });
   });
 
   router.get('/login', (req, res) => {
