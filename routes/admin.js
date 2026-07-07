@@ -36,6 +36,37 @@ module.exports = function(db) {
     res.render('admin/dashboard', { title: '管理后台', matches, users, query: req.query, eliminated });
   });
 
+  // ===== 查看用户登录与投票时间线（含同IP下的其他账号线索） =====
+  router.get('/users/:id/activity', requireAdmin, (req, res) => {
+    const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.params.id);
+    if (!user) return res.redirect('/admin');
+
+    const logins = db.prepare(
+      'SELECT * FROM login_logs WHERE user_id=? ORDER BY created_at DESC'
+    ).all(user.id);
+
+    const votes = db.prepare(`
+      SELECT v.*, m.home_team, m.away_team, m.stage
+      FROM votes v JOIN matches m ON v.match_id=m.id
+      WHERE v.user_id=? ORDER BY v.created_at DESC
+    `).all(user.id);
+
+    // 该用户用过的所有IP，反查这些IP下是否有其他账号登录过（同设备/同网络线索）
+    const ips = [...new Set(logins.map(l => l.ip).filter(Boolean))];
+    let sameIpOthers = [];
+    if (ips.length > 0) {
+      const placeholders = ips.map(() => '?').join(',');
+      sameIpOthers = db.prepare(`
+        SELECT l.*, u.nickname
+        FROM login_logs l JOIN users u ON l.user_id=u.id
+        WHERE l.ip IN (${placeholders}) AND l.user_id != ?
+        ORDER BY l.created_at DESC
+      `).all(...ips, user.id);
+    }
+
+    res.render('admin/user-activity', { title: `${user.nickname} 的活动记录`, user, logins, votes, sameIpOthers });
+  });
+
   // ===== 手动刷新无投票比赛的盘口数据 =====
   router.post('/refresh-odds', requireAdmin, async (req, res) => {
     try {

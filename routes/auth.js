@@ -48,6 +48,12 @@ module.exports = function(db) {
       }
     }
     req.session.user = { id: user.id, nickname: user.nickname };
+
+    // 记录本次登录（IP + User-Agent + 时间），供后台查看
+    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || '';
+    const ua = req.headers['user-agent'] || '';
+    db.prepare('INSERT INTO login_logs (user_id, ip, user_agent) VALUES (?, ?, ?)').run(user.id, ip, ua);
+
     // 未设置Pin码 → 每次登录提醒设置；已设置 → 跳过
     if (!user.pin) {
       return res.redirect('/set-pin');

@@ -131,6 +131,7 @@
                   <button type="button" class="btn btn-sm btn-outline" onclick="cancelRename(<%= u.id %>)">取消</button>
                 </form>
                 <div class="user-btns" id="btns-<%= u.id %>">
+                  <a href="/admin/users/<%= u.id %>/activity" class="btn btn-sm btn-outline">🕵️ 活动记录</a>
                   <button class="btn btn-sm btn-outline" onclick="showRename(<%= u.id %>)">✏️ 改名</button>
                   <% if (u.pin) { %>
                     <form method="POST" action="/admin/users/<%= u.id %>/reset-pin" style="display:inline"

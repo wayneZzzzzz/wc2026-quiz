@@ -307,6 +307,13 @@ async function initDb(SqlLib) {
     points INTEGER NOT NULL, description TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+  // 登录日志：记录每次成功登录的用户、IP、User-Agent 和时间，供后台查看
+  sqlDb.run(`CREATE TABLE IF NOT EXISTS login_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    ip TEXT, user_agent TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
   save();
 }
 

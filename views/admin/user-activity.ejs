@@ -1,0 +1,66 @@
+<%- include('../partials/header', {title}) %>
+
+<div class="container">
+  <a href="/admin" class="back-link">← 返回后台</a>
+  <div class="page-header">
+    <h1>🕵️ <%= user.nickname %> 的活动记录</h1>
+  </div>
+
+  <% if (sameIpOthers.length > 0) { %>
+    <div class="alert alert-error" style="margin-bottom:1.5rem">
+      ⚠️ 该用户使用过的 IP，也出现在以下账号的登录记录中（可能是同一设备/网络，仅供参考，不代表确凿证据）：
+      <ul style="margin-top:.5rem;padding-left:1.2rem">
+        <% sameIpOthers.forEach(l => { %>
+          <li><strong><%= l.nickname %></strong> · <%= fmtBJFull(l.created_at) %> · IP: <%= l.ip %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
+
+  <div class="admin-grid-2col">
+    <section class="section">
+      <h2>🔑 登录记录（共 <%= logins.length %> 次）</h2>
+      <% if (logins.length === 0) { %>
+        <div class="empty-state">暂无登录记录</div>
+      <% } else { %>
+        <table class="lb-table">
+          <thead><tr><th>时间</th><th>IP</th><th>设备/浏览器</th></tr></thead>
+          <tbody>
+            <% logins.forEach(l => { %>
+              <tr>
+                <td><%= fmtBJFull(l.created_at) %></td>
+                <td><%= l.ip || '-' %></td>
+                <td style="font-size:.78rem;color:#6b7280;max-width:260px;word-break:break-all"><%= l.user_agent || '-' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </section>
+
+    <section class="section">
+      <h2>🗳 投票记录（共 <%= votes.length %> 次）</h2>
+      <% if (votes.length === 0) { %>
+        <div class="empty-state">暂无投票记录</div>
+      <% } else { %>
+        <table class="lb-table">
+          <thead><tr><th>投票时间</th><th>比赛</th><th>选择</th></tr></thead>
+          <tbody>
+            <% votes.forEach(v => { %>
+              <tr>
+                <td><%= fmtBJFull(v.created_at) %></td>
+                <td><%= v.home_team %> vs <%= v.away_team %><span style="color:#9ca3af;font-size:.78rem"> (<%= v.stage %>)</span></td>
+                <td>
+                  <%= v.choice.toUpperCase() %>
+                  <% if (v.is_virtual) { %><span class="badge-voted" style="background:#fef2f2;color:#dc2626">虚拟</span><% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </section>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -4,13 +4,14 @@ const path = require('path');
 const initSqlJs = require('sql.js');
 const { createWrapper, initDb } = require('./database');
 const getDb = require('./lib/init-db');
-const { FLAGS, OPTION_TIPS, fmtBJ, fmtET, resolveLabel } = require('./lib/helpers');
+const { FLAGS, OPTION_TIPS, fmtBJ, fmtET, fmtBJFull, resolveLabel } = require('./lib/helpers');
 const ALL_TEAMS = Object.keys(FLAGS); // 48支参赛队
 const importMatches = require('./scripts/import-matches');
 const updateScores  = require('./scripts/update-scores');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.set('trust proxy', true); // Render 等平台在代理后，需信任 X-Forwarded-For 才能拿到真实客户端 IP
 
 // SSE 广播
 const sseClients = new Set();
@@ -42,6 +43,7 @@ app.use((req, res, next) => {
   res.locals.tip = label => OPTION_TIPS[label] || '';
   res.locals.fmtBJ = fmtBJ;
   res.locals.fmtET = fmtET;
+  res.locals.fmtBJFull = fmtBJFull;
   // 将通用标签（强队/弱队）替换为实际队名
   res.locals.rl = (label, match) =>
     resolveLabel(label, match.home_team, match.away_team, match.handicap_desc);
