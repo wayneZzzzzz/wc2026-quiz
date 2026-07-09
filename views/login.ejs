@@ -24,7 +24,7 @@
       </div>
     <% } %>
 
-    <form method="POST" action="/login">
+    <form method="POST" action="/login" id="login-form">
       <div class="form-group">
         <label class="form-label">你的昵称</label>
         <input type="text" name="nickname" id="nickname-input" class="form-input"
@@ -38,7 +38,7 @@
         <input type="text" name="pin" class="form-input" inputmode="numeric" pattern="\d{4}"
           maxlength="4" placeholder="如已设置Pin码请输入">
       </div>
-      <button type="submit" class="btn btn-primary btn-block">进入竞猜</button>
+      <button type="submit" id="login-submit-btn" class="btn btn-primary btn-block">进入竞猜</button>
     </form>
 
     <div class="auth-rules">
@@ -59,6 +59,37 @@ function fillNickname(name) {
   document.getElementById('nickname-input').value = name;
   document.getElementById('nickname-input').focus();
 }
+
+// 提交前检查：本设备/IP是否此前登录过其他账号，若是则弹窗提醒二次确认
+const loginForm = document.getElementById('login-form');
+let conflictConfirmed = false;
+loginForm.addEventListener('submit', async function(e) {
+  if (conflictConfirmed) return; // 用户已确认过，直接放行
+  e.preventDefault();
+
+  const nickname = document.getElementById('nickname-input').value.trim();
+  const btn = document.getElementById('login-submit-btn');
+  btn.disabled = true;
+
+  let conflict = false;
+  try {
+    const resp = await fetch('/login/check-conflict?nickname=' + encodeURIComponent(nickname));
+    const data = await resp.json();
+    conflict = !!data.conflict;
+  } catch (err) {
+    conflict = false; // 检查失败时不阻塞登录
+  }
+
+  btn.disabled = false;
+
+  if (conflict) {
+    const ok = confirm('你正在使用与之前使用的账号不同的账号登录，你确定登录吗？');
+    if (!ok) return;
+  }
+
+  conflictConfirmed = true;
+  loginForm.requestSubmit ? loginForm.requestSubmit() : loginForm.submit();
+});
 </script>
 
 <%- include('partials/footer') %>

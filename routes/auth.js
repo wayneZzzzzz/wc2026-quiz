@@ -1,5 +1,9 @@
 const express = require('express');
 
+function getClientIp(req) {
+  return req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || '';
+}
+
 module.exports = function(db) {
   const router = express.Router();
 
@@ -29,6 +33,25 @@ module.exports = function(db) {
     res.render('login', { title: '加入竞猜', error: null, existingUsers });
   });
 
+  // 供登录页在提交前异步检查：这台设备/IP 此前是否登录过其他账号
+  router.get('/login/check-conflict', (req, res) => {
+    const nickname = (req.query.nickname || '').trim().slice(0, 20);
+    if (!nickname) return res.json({ conflict: false });
+
+    const ip = getClientIp(req);
+    if (!ip) return res.json({ conflict: false });
+
+    const priorUserIds = db.prepare('SELECT DISTINCT user_id FROM login_logs WHERE ip = ?').all(ip).map(r => r.user_id);
+    if (priorUserIds.length === 0) return res.json({ conflict: false });
+
+    const target = db.prepare('SELECT id FROM users WHERE nickname = ?').get(nickname);
+    const conflict = target
+      ? priorUserIds.some(id => id !== target.id)
+      : priorUserIds.length > 0; // 昵称不存在（将新建账号），但该设备之前登录过其他账号
+
+    res.json({ conflict });
+  });
+
   router.post('/login', (req, res) => {
     const { nickname, pin } = req.body;
     const existingUsers = db.prepare('SELECT nickname FROM users ORDER BY created_at ASC').all();
@@ -50,7 +73,7 @@ module.exports = function(db) {
     req.session.user = { id: user.id, nickname: user.nickname };
 
     // 记录本次登录（IP + User-Agent + 时间），供后台查看
-    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || '';
+    const ip = getClientIp(req);
     const ua = req.headers['user-agent'] || '';
     db.prepare('INSERT INTO login_logs (user_id, ip, user_agent) VALUES (?, ?, ?)').run(user.id, ip, ua);
     // 防止 server.js 的活动节流中间件在紧接着的跳转请求上重复记录一条几乎同时的日志
