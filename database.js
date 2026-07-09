@@ -316,6 +316,14 @@ async function initDb(SqlLib) {
     ip TEXT, user_agent TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+  // 账号冲突弹窗日志：同设备/IP登录不同账号触发提醒时记录，及用户后续的选择
+  sqlDb.run(`CREATE TABLE IF NOT EXISTS login_conflict_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nickname TEXT NOT NULL,
+    ip TEXT, user_agent TEXT,
+    outcome TEXT DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
   save();
 }
 

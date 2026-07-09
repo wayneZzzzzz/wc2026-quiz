@@ -71,11 +71,12 @@ loginForm.addEventListener('submit', async function(e) {
   const btn = document.getElementById('login-submit-btn');
   btn.disabled = true;
 
-  let conflict = false;
+  let conflict = false, promptId = null;
   try {
     const resp = await fetch('/login/check-conflict?nickname=' + encodeURIComponent(nickname));
     const data = await resp.json();
     conflict = !!data.conflict;
+    promptId = data.promptId || null;
   } catch (err) {
     conflict = false; // 检查失败时不阻塞登录
   }
@@ -84,6 +85,15 @@ loginForm.addEventListener('submit', async function(e) {
 
   if (conflict) {
     const ok = confirm('你正在使用与之前使用的账号不同的账号登录，你确定登录吗？');
+    if (promptId) {
+      try {
+        await fetch('/login/check-conflict/' + promptId + '/resolve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ outcome: ok ? 'confirmed' : 'cancelled' }),
+        });
+      } catch (err) {} // 上报失败不影响用户实际登录操作
+    }
     if (!ok) return;
   }
 

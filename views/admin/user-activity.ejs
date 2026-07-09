@@ -17,6 +17,34 @@
     </div>
   <% } %>
 
+  <section class="section" style="margin-bottom:1.5rem">
+    <h2>🚨 触发的账号冲突弹窗（共 <%= conflictPrompts.length %> 次）</h2>
+    <% if (conflictPrompts.length === 0) { %>
+      <div class="empty-state">该账号登录时未触发过冲突提醒</div>
+    <% } else { %>
+      <table class="lb-table">
+        <thead><tr><th>触发时间</th><th>IP</th><th>用户的选择</th></tr></thead>
+        <tbody>
+          <% conflictPrompts.forEach(p => { %>
+            <tr>
+              <td><%= fmtBJFull(p.created_at) %></td>
+              <td><%= p.ip || '-' %></td>
+              <td>
+                <% if (p.outcome === 'confirmed') { %>
+                  <span style="color:#dc2626;font-weight:600">✅ 已确认，继续登录</span>
+                <% } else if (p.outcome === 'cancelled') { %>
+                  <span style="color:#16a34a;font-weight:600">🚫 已取消，未登录</span>
+                <% } else { %>
+                  <span style="color:#9ca3af">未收到反馈（可能中途关闭页面）</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+
   <div class="admin-grid-2col">
     <section class="section">
       <h2>🔑 登录记录（共 <%= logins.length %> 次）</h2>

@@ -64,7 +64,12 @@ module.exports = function(db) {
       `).all(...ips, user.id);
     }
 
-    res.render('admin/user-activity', { title: `${user.nickname} 的活动记录`, user, logins, votes, sameIpOthers });
+    // 该用户昵称触发过的账号冲突弹窗提醒及后续选择
+    const conflictPrompts = db.prepare(
+      'SELECT * FROM login_conflict_logs WHERE nickname=? ORDER BY created_at DESC'
+    ).all(user.nickname);
+
+    res.render('admin/user-activity', { title: `${user.nickname} 的活动记录`, user, logins, votes, sameIpOthers, conflictPrompts });
   });
 
   // ===== 冷门值统计：每个用户所有投票选项，在各自比赛中被选人数之和 =====
