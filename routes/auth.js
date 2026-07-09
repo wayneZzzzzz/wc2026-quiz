@@ -75,11 +75,11 @@ module.exports = function(db) {
     }
     const clean = nickname.trim().slice(0, 20);
     let user = db.prepare('SELECT * FROM users WHERE nickname = ?').get(clean);
-    const isNew = !user;
     if (!user) {
-      const result = db.prepare('INSERT INTO users (nickname) VALUES (?)').run(clean);
-      user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
-    } else if (user.pin) {
+      // 已停止新用户注册，仅允许现有成员登录
+      return res.render('login', { title: '加入竞猜', error: '该昵称不存在，活动已停止新用户注册，仅限已有成员登录', existingUsers });
+    }
+    if (user.pin) {
       // 已设置Pin码的账号，登录必须验证Pin
       if (!pin || pin !== user.pin) {
         return res.render('login', { title: '加入竞猜', error: 'Pin码错误，请输入正确的4位Pin码', existingUsers });
