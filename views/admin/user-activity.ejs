@@ -52,12 +52,13 @@
         <div class="empty-state">暂无登录记录</div>
       <% } else { %>
         <table class="lb-table">
-          <thead><tr><th>时间</th><th>IP</th><th>设备/浏览器</th></tr></thead>
+          <thead><tr><th>时间</th><th>IP</th><th>设备标识</th><th>设备/浏览器</th></tr></thead>
           <tbody>
             <% logins.forEach(l => { %>
               <tr>
                 <td><%= fmtBJFull(l.created_at) %></td>
                 <td><%= l.ip || '-' %></td>
+                <td style="font-size:.72rem;color:#9ca3af;max-width:100px;word-break:break-all"><%= l.device_id ? l.device_id.slice(0,8) : '-' %></td>
                 <td style="font-size:.78rem;color:#6b7280;max-width:260px;word-break:break-all"><%= l.user_agent || '-' %></td>
               </tr>
             <% }) %>

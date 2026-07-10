@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+const crypto = require('crypto');
 const initSqlJs = require('sql.js');
 const { createWrapper, initDb } = require('./database');
 const getDb = require('./lib/init-db');
@@ -35,6 +36,24 @@ app.use(session({
   cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }
 }));
 
+// 设备标识：长期存活的cookie（2年），不依赖IP。用于识别"同一台设备换了新IP/VPN
+// 登录不同账号"的情况——IP会变，但设备cookie不会，弥补纯IP比对的漏洞。
+app.use((req, res, next) => {
+  const cookieHeader = req.headers.cookie || '';
+  const match = cookieHeader.split(';').map(s => s.trim()).find(s => s.startsWith('device_id='));
+  let deviceId = match ? decodeURIComponent(match.split('=')[1]) : null;
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+    res.cookie('device_id', deviceId, {
+      maxAge: 2 * 365 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: 'lax',
+    });
+  }
+  req.deviceId = deviceId;
+  next();
+});
+
 // 全局模板变量
 app.use((req, res, next) => {
   res.locals.currentUser = req.session.user || null;
@@ -47,6 +66,9 @@ app.use((req, res, next) => {
   // 将通用标签（强队/弱队）替换为实际队名
   res.locals.rl = (label, match) =>
     resolveLabel(label, match.home_team, match.away_team, match.handicap_desc);
+  // 登录后一次性提示"上次登录时间/地点"，显示后立即清除，刷新页面不再重复出现
+  res.locals.lastLoginNotice = req.session.showLastLogin || null;
+  delete req.session.showLastLogin;
   next();
 });
 

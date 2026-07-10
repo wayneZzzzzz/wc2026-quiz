@@ -1,4 +1,6 @@
 const express = require('express');
+const { lookupGeo } = require('../lib/geoip');
+const { fmtBJFull } = require('../lib/helpers');
 
 function getClientIp(req) {
   return req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || '';
@@ -34,20 +36,23 @@ module.exports = function(db) {
   });
 
   // 供登录页在提交前异步检查：这台设备/IP 此前是否登录过其他账号
+  // 同时按 IP 和设备cookie两个维度检测，设备cookie不随换网络/VPN变化，弥补纯IP比对的漏洞
   router.get('/login/check-conflict', (req, res) => {
     const nickname = (req.query.nickname || '').trim().slice(0, 20);
     if (!nickname) return res.json({ conflict: false });
 
     const ip = getClientIp(req);
-    if (!ip) return res.json({ conflict: false });
+    const deviceId = req.deviceId;
 
-    const priorUserIds = db.prepare('SELECT DISTINCT user_id FROM login_logs WHERE ip = ?').all(ip).map(r => r.user_id);
+    const priorByIp = ip ? db.prepare('SELECT DISTINCT user_id FROM login_logs WHERE ip = ?').all(ip).map(r => r.user_id) : [];
+    const priorByDevice = deviceId ? db.prepare('SELECT DISTINCT user_id FROM login_logs WHERE device_id = ?').all(deviceId).map(r => r.user_id) : [];
+    const priorUserIds = [...new Set([...priorByIp, ...priorByDevice])];
     if (priorUserIds.length === 0) return res.json({ conflict: false });
 
     const target = db.prepare('SELECT id FROM users WHERE nickname = ?').get(nickname);
     const conflict = target
       ? priorUserIds.some(id => id !== target.id)
-      : priorUserIds.length > 0; // 昵称不存在（将新建账号），但该设备之前登录过其他账号
+      : priorUserIds.length > 0; // 昵称不存在（将新建账号），但该设备/IP之前登录过其他账号
 
     if (!conflict) return res.json({ conflict: false });
 
@@ -67,7 +72,7 @@ module.exports = function(db) {
     res.json({ ok: true });
   });
 
-  router.post('/login', (req, res) => {
+  router.post('/login', async (req, res) => {
     const { nickname, pin } = req.body;
     const existingUsers = db.prepare('SELECT nickname FROM users ORDER BY created_at ASC').all();
     if (!nickname || !nickname.trim()) {
@@ -87,12 +92,24 @@ module.exports = function(db) {
     }
     req.session.user = { id: user.id, nickname: user.nickname };
 
-    // 记录本次登录（IP + User-Agent + 时间），供后台查看
+    // 取本账号上一次登录记录（用于登录后提示"上次登录时间/地点"），再写入本次登录
+    const prevLogin = db.prepare(
+      'SELECT * FROM login_logs WHERE user_id=? ORDER BY created_at DESC LIMIT 1'
+    ).get(user.id);
+
     const ip = getClientIp(req);
     const ua = req.headers['user-agent'] || '';
-    db.prepare('INSERT INTO login_logs (user_id, ip, user_agent) VALUES (?, ?, ?)').run(user.id, ip, ua);
+    db.prepare('INSERT INTO login_logs (user_id, ip, user_agent, device_id) VALUES (?, ?, ?, ?)').run(user.id, ip, ua, req.deviceId || null);
     // 防止 server.js 的活动节流中间件在紧接着的跳转请求上重复记录一条几乎同时的日志
     req.session.lastActivityLoggedAt = Date.now();
+
+    if (prevLogin) {
+      const location = await lookupGeo(prevLogin.ip);
+      req.session.showLastLogin = {
+        time: fmtBJFull(prevLogin.created_at),
+        location: location || (prevLogin.ip || '未知'),
+      };
+    }
 
     // 未设置Pin码 → 每次登录提醒设置；已设置 → 跳过
     if (!user.pin) {

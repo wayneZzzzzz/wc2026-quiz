@@ -316,6 +316,8 @@ async function initDb(SqlLib) {
     ip TEXT, user_agent TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+  // 迁移：加设备标识字段（长期cookie，不依赖IP，用于识别同一设备换IP/VPN登录不同账号）
+  try { sqlDb.run('ALTER TABLE login_logs ADD COLUMN device_id TEXT DEFAULT NULL'); } catch(e) {}
   // 账号冲突弹窗日志：同设备/IP登录不同账号触发提醒时记录，及用户后续的选择
   sqlDb.run(`CREATE TABLE IF NOT EXISTS login_conflict_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -51,17 +51,23 @@ module.exports = function(db) {
       WHERE v.user_id=? ORDER BY v.created_at DESC
     `).all(user.id);
 
-    // 该用户用过的所有IP，反查这些IP下是否有其他账号登录过（同设备/同网络线索）
+    // 该用户用过的所有IP和设备标识，反查是否有其他账号登录过（同设备/同网络线索）
+    // 设备标识不随换IP/VPN变化，能捕捉纯IP比对漏掉的"换网络登录不同账号"情况
     const ips = [...new Set(logins.map(l => l.ip).filter(Boolean))];
+    const deviceIds = [...new Set(logins.map(l => l.device_id).filter(Boolean))];
     let sameIpOthers = [];
-    if (ips.length > 0) {
-      const placeholders = ips.map(() => '?').join(',');
+    if (ips.length > 0 || deviceIds.length > 0) {
+      const ipPh = ips.map(() => '?').join(',');
+      const devPh = deviceIds.map(() => '?').join(',');
+      const conditions = [];
+      if (ips.length > 0) conditions.push(`l.ip IN (${ipPh})`);
+      if (deviceIds.length > 0) conditions.push(`l.device_id IN (${devPh})`);
       sameIpOthers = db.prepare(`
         SELECT l.*, u.nickname
         FROM login_logs l JOIN users u ON l.user_id=u.id
-        WHERE l.ip IN (${placeholders}) AND l.user_id != ?
+        WHERE (${conditions.join(' OR ')}) AND l.user_id != ?
         ORDER BY l.created_at DESC
-      `).all(...ips, user.id);
+      `).all(...ips, ...deviceIds, user.id);
     }
 
     // 该用户昵称触发过的账号冲突弹窗提醒及后续选择

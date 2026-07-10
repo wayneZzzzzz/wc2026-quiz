@@ -26,3 +26,10 @@
   </div>
 </nav>
 <main class="main-content">
+<% if (typeof lastLoginNotice !== 'undefined' && lastLoginNotice) { %>
+  <div class="container" style="padding-top:1rem">
+    <div class="alert alert-info" style="margin-bottom:0">
+      👋 欢迎回来！你上次登录时间：<strong><%= lastLoginNotice.time %></strong>，地点：<strong><%= lastLoginNotice.location %></strong>
+    </div>
+  </div>
+<% } %>
