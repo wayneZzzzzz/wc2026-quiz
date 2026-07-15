@@ -312,6 +312,24 @@ async function initDb(SqlLib) {
     }
   }
 
+  // 迁移：导入已确定的季军赛+决赛对阵（市场尚未开盘，暂用平手盘占位）
+  const FINAL_STAGE_SEED = hasExistingMatches ? [
+    { home:'法国', away:'英格兰', time:'2026-07-19 19:00', stage:'季军赛',
+      desc:'平手盘', a:'法国赢球', b:'平局', c:'英格兰赢球' },
+    { home:'西班牙', away:'阿根廷', time:'2026-07-19 19:00', stage:'决赛',
+      desc:'平手盘', a:'西班牙赢球', b:'平局', c:'阿根廷赢球' },
+  ] : [];
+  for (const m of FINAL_STAGE_SEED) {
+    const exists = sqlDb.exec(`SELECT id FROM matches WHERE home_team='${m.home}' AND away_team='${m.away}' AND stage='${m.stage}'`);
+    if (exists.length === 0 || exists[0].values.length === 0) {
+      sqlDb.run(
+        `INSERT INTO matches (home_team, away_team, match_time, stage, handicap_desc, option_a, option_b, option_c, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')`,
+        [m.home, m.away, m.time, m.stage, m.desc, m.a, m.b, m.c]
+      );
+    }
+  }
+
   sqlDb.run(`CREATE TABLE IF NOT EXISTS votes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL, match_id INTEGER NOT NULL,

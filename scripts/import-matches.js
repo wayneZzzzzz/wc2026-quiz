@@ -180,6 +180,14 @@ const SEMI_FINAL = [
     handicap_desc:'平手盘', option_a:'英格兰赢球', option_b:'平局', option_c:'阿根廷赢球' },
 ];
 
+// 季军赛+决赛（已确定对阵；市场尚未开盘，暂用平手盘占位，待盘口数据出现后可在后台手动调整）
+const FINAL_STAGE = [
+  { home:'法国', away:'英格兰', time:'2026-07-19 19:00', stage:'季军赛',
+    handicap_desc:'平手盘', option_a:'法国赢球', option_b:'平局', option_c:'英格兰赢球' },
+  { home:'西班牙', away:'阿根廷', time:'2026-07-19 19:00', stage:'决赛',
+    handicap_desc:'平手盘', option_a:'西班牙赢球', option_b:'平局', option_c:'阿根廷赢球' },
+];
+
 // 初始盘口估算（根据球队实力，API 会覆盖真实数据）
 function estimateHandicap(home, away) {
   const strong = ['巴西','法国','阿根廷','德国','英格兰','西班牙','葡萄牙','荷兰','比利时'];
@@ -227,7 +235,7 @@ async function importMatches() {
     `).run(m.home, m.away, m.time, m.stage, h.desc, h.a, h.b, h.c);
     imported++;
   }
-  for (const m of [...ROUND_OF_32, ...ROUND_OF_16, ...QUARTER_FINAL, ...SEMI_FINAL]) {
+  for (const m of [...ROUND_OF_32, ...ROUND_OF_16, ...QUARTER_FINAL, ...SEMI_FINAL, ...FINAL_STAGE]) {
     db.prepare(`
       INSERT INTO matches (home_team, away_team, match_time, stage, handicap_desc, option_a, option_b, option_c, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')
@@ -243,6 +251,7 @@ module.exports.ROUND_OF_32 = ROUND_OF_32;
 module.exports.ROUND_OF_16 = ROUND_OF_16;
 module.exports.QUARTER_FINAL = QUARTER_FINAL;
 module.exports.SEMI_FINAL = SEMI_FINAL;
+module.exports.FINAL_STAGE = FINAL_STAGE;
 
 // 独立运行支持
 if (require.main === module) {

@@ -1,6 +1,6 @@
 const express = require('express');
 
-const KNOCKOUT_STAGES = ['32强','16强','八强','四强','决赛'];
+const KNOCKOUT_STAGES = ['32强','16强','八强','四强','季军赛','决赛'];
 
 function getEffectiveStatus(match) {
   if (match.status === 'finished') return 'finished';
