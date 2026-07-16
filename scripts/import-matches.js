@@ -182,7 +182,7 @@ const SEMI_FINAL = [
 
 // 季军赛+决赛（已确定对阵；市场尚未开盘，暂用平手盘占位，待盘口数据出现后可在后台手动调整）
 const FINAL_STAGE = [
-  { home:'法国', away:'英格兰', time:'2026-07-19 19:00', stage:'季军赛',
+  { home:'法国', away:'英格兰', time:'2026-07-18 21:00', stage:'季军赛',
     handicap_desc:'平手盘', option_a:'法国赢球', option_b:'平局', option_c:'英格兰赢球' },
   { home:'西班牙', away:'阿根廷', time:'2026-07-19 19:00', stage:'决赛',
     handicap_desc:'平手盘', option_a:'西班牙赢球', option_b:'平局', option_c:'阿根廷赢球' },

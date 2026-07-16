@@ -314,7 +314,7 @@ async function initDb(SqlLib) {
 
   // 迁移：导入已确定的季军赛+决赛对阵（市场尚未开盘，暂用平手盘占位）
   const FINAL_STAGE_SEED = hasExistingMatches ? [
-    { home:'法国', away:'英格兰', time:'2026-07-19 19:00', stage:'季军赛',
+    { home:'法国', away:'英格兰', time:'2026-07-18 21:00', stage:'季军赛',
       desc:'平手盘', a:'法国赢球', b:'平局', c:'英格兰赢球' },
     { home:'西班牙', away:'阿根廷', time:'2026-07-19 19:00', stage:'决赛',
       desc:'平手盘', a:'西班牙赢球', b:'平局', c:'阿根廷赢球' },
@@ -329,6 +329,8 @@ async function initDb(SqlLib) {
       );
     }
   }
+  // 迁移：修正季军赛（法国vs英格兰）比赛时间（原误存为07-19 19:00，实为07-18 21:00 UTC）
+  sqlDb.run(`UPDATE matches SET match_time='2026-07-18 21:00' WHERE home_team='法国' AND away_team='英格兰' AND stage='季军赛' AND match_time='2026-07-19 19:00'`);
 
   sqlDb.run(`CREATE TABLE IF NOT EXISTS votes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
