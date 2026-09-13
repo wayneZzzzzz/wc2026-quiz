@@ -1,5 +1,9 @@
 # 世界杯竞猜 2026 (wc2026-quiz)
 
+> **项目状态：已结束（归档）。** 赛事已完赛，不再开发新功能、不再部署。
+> 本仓库仅作代码留存，数据以 `scripts/export-archive.js` 导出的存档为准。
+> 如需改动，请先确认这不是应该开在其他项目里的工作。
+
 ## 项目边界
 
 本仓库是一个**独立项目**，与 `wiseinsur`、`archery`、`金融分析网页` 是**四个平行项目，互不隶属、互不依赖**。
@@ -31,13 +35,33 @@
 
 ## 常用命令
 
+归档后唯一还需要用到的命令：
+
 ```bash
 npm install
+node scripts/export-archive.js   # 导出全部数据到 archive/（只读，不改数据库）
+```
+
+以下为项目运行期命令，已停用，仅供追溯：
+
+```bash
 npm start                      # http://localhost:3000
 npm run dev                    # nodemon 热重载
 node scripts/update-odds.js    # 拉取盘口，需 ODDS_API_KEY
 node scripts/update-scores.js  # 拉取赛果，需 ODDS_API_KEY
 ```
+
+## 数据存档
+
+数据库文件 `worldcup.db.bin` **不在仓库内**（已 gitignore），只存在于本机与线上实例。
+项目下线前必须跑一次 `node scripts/export-archive.js`，产出：
+
+- `archive/*.csv` — 每表一个，Excel 可直接打开
+- `archive/all-tables.json` — 全量 JSON
+- `archive/worldcup.sqlite` — SQLite 文件，任意工具可读
+
+`users.pin` 在三种格式中均已脱敏；`login_logs` 含参与者 IP，属个人信息。
+`archive/` 已 gitignore，**不要提交**，请另行妥善保存。
 
 ## 环境变量
 

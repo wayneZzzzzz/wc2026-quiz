@@ -8,3 +8,6 @@ npm-debug.log
 # Claude Code：本地个人配置（含机器路径与临时权限），不入库
 .claude/settings.local.json
 .claude/launch.json
+
+# 数据存档产物：含参与者 IP 等个人信息，不入库
+archive/
