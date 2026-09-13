@@ -4,13 +4,22 @@
 //
 //   node scripts/export-archive.js [数据库路径] [输出目录]
 //   默认： ./worldcup.db.bin  →  ./archive/
+//
+// 线上（Render free plan）磁盘是临时的，权威数据在 GitHub Gist 备份里，
+// 本机的 worldcup.db.bin 可能是旧的。从 Gist 取最新的一份：
+//
+//   GIST_TOKEN=xxx GIST_ID=xxx node scripts/export-archive.js --from-gist
+//   （GIST_ID 也可放在仓库根目录的 .gist_id 文件里）
 
 const fs = require('fs');
 const path = require('path');
 const initSqlJs = require('sql.js');
 
-const DB_PATH = process.argv[2] || path.join(__dirname, '..', 'worldcup.db.bin');
-const OUT_DIR = process.argv[3] || path.join(__dirname, '..', 'archive');
+const args = process.argv.slice(2);
+const FROM_GIST = args.includes('--from-gist');
+const positional = args.filter(a => !a.startsWith('--'));
+const DB_PATH = positional[0] || path.join(__dirname, '..', 'worldcup.db.bin');
+const OUT_DIR = positional[1] || path.join(__dirname, '..', 'archive');
 
 // 敏感字段：导出时脱敏，存档不需要它们的原值
 const MASK = { users: ['pin'] };
@@ -21,15 +30,36 @@ function csvCell(v) {
   return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }
 
-(async () => {
+// 取出数据库字节：优先 Gist（线上权威副本），否则读本地文件
+async function loadBuffer() {
+  if (FROM_GIST) {
+    const gist = require('../lib/gist-backup');
+    gist.loadLocalGistId();
+    if (!gist.isEnabled()) {
+      console.error('未设置 GIST_TOKEN，无法从 Gist 拉取。');
+      process.exit(1);
+    }
+    const buf = await gist.download();
+    if (!buf) {
+      console.error('从 Gist 拉取失败：检查 GIST_TOKEN 权限与 GIST_ID（或根目录 .gist_id）是否正确。');
+      process.exit(1);
+    }
+    console.log(`已从 Gist 取得数据库（${(buf.length / 1024).toFixed(1)} KB）`);
+    return buf;
+  }
   if (!fs.existsSync(DB_PATH)) {
     console.error(`找不到数据库文件：${DB_PATH}`);
-    console.error('若数据只在线上（Railway/Render），请先从那边下载 worldcup.db.bin 再运行。');
+    console.error('线上 Render free plan 磁盘为临时存储，权威数据在 Gist 备份中，改用：');
+    console.error('  GIST_TOKEN=xxx GIST_ID=xxx node scripts/export-archive.js --from-gist');
     process.exit(1);
   }
+  return fs.readFileSync(DB_PATH);
+}
 
+(async () => {
+  const buffer = await loadBuffer();
   const SQL = await initSqlJs();
-  const db = new SQL.Database(fs.readFileSync(DB_PATH));
+  const db = new SQL.Database(buffer);
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
   const tables = db.exec(
@@ -73,7 +103,7 @@ function csvCell(v) {
 `# 世界杯竞猜 2026 — 数据存档
 
 导出时间：${new Date().toISOString()}
-来源文件：${path.resolve(DB_PATH)}
+数据来源：${FROM_GIST ? 'GitHub Gist 线上备份（权威副本）' : path.resolve(DB_PATH) + '（本机文件，可能非最新）'}
 
 | 表 | 行数 | 说明 |
 |----|------|------|
